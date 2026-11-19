@@ -278,6 +278,23 @@ python3 ${CLAUDE_SKILL_DIR}/scripts/check_quotes.py research/<slug> draft.md
 It verifies the quotes, reports unknown C/S IDs, and lists the cited claims with credibility
 3-6. Re-read every sentence it lists, and fix any that presents a rumor or doubt as fact.
 
+The script can't check meaning, so then do a **fact review**: go through the draft sentence
+by sentence and compare each one with the claims it cites. Look for:
+
+- **extra details**: a date, number, name, place or description that the claim doesn't
+  contain. That holds even if a source mentions the detail: a detail outside `claims.md` was
+  never fact-checked, and that is how conflicts between sources slip through. Either cut it,
+  or go back to Assess, add it as a claim and check it.
+- **stretched meaning**: the sentence says more than the claim ("story details" turning into
+  "mechanics", "reportedly" turning into "confirmed").
+- **wrong attribution**: the quote or statement belongs to someone else than the sentence
+  says (an Xbox store blurb is not "Atlus says").
+- **unmarked facts**: a factual sentence without claim IDs.
+
+If you can run a subagent, give this review to a fresh one with only `claims.md` and
+`draft.md`, because it has no memory of the sources to fill gaps from. Fix everything it
+finds, then rerun the script.
+
 ### Revisions
 
 The user may ask to shorten, change the emphasis, drop the rumors, or restructure. Before a
@@ -287,7 +304,8 @@ new facts goes back to Collect and Assess.
 
 `draft.md` keeps its claim IDs and backtick quotes: that is what keeps it checkable. When the
 user wants a clean copy to publish, write `final.md` from `draft.md`: claim IDs become
-footnotes pointing to the sources (title, URL), and quotes take the text's normal quotation
+footnotes pointing to the sources (title, URL, and the archive link when there is one; it
+is the only working link when the live page is gone or blocked), and quotes take the text's normal quotation
 marks, with the original in a footnote when the text shows a translation. Regenerate
 `final.md` from `draft.md` each time; never edit it on its own.
 
