@@ -36,6 +36,22 @@ def main():
         assert "[^3]: Оригинал: «新しい物語» — セガ — https://sega.example/\n" in out, out
         assert "S002" not in out.split("[^1]:")[0], out  # contradicting sources are not cited
 
+        write(f"{d}/sources.md", "## S001 — Wiki\n- URL: https://w.example/a\n- Author: unknown\n- Published: last edited 2026-11-17\n\n"
+                                 "## S002 — セガ\n- URL: https://sega.example/\n- Author: Kazuhisa Wada\n- Published: 2026-06-08\n")
+        write(f"{d}/STATE.md", "## Settings\n- User language: English\n- Citation style: numbered <!-- footnotes | numbered | author-date -->\n")
+        r = subprocess.run([sys.executable, BUILD, d], capture_output=True, text=True)
+        assert r.returncode == 0 and "(numbered," in r.stdout, r.stdout + r.stderr
+        out = open(f"{d}/final.md", encoding="utf-8").read()
+        assert "Fact one [1]. Fact two [1, 2]. Again [1]." in out, out
+        assert "Quote: «новая история» [2][^1]. Native: “plain words” [1]. See [2]." in out, out
+        assert "## Sources\n\n1. Wiki — https://w.example/a\n2. セガ — https://sega.example/\n" in out, out
+        assert "[^1]: Original: “新しい物語”\n" in out, out
+
+        r = subprocess.run([sys.executable, BUILD, d, "--style", "author-date"], capture_output=True, text=True)
+        out = open(f"{d}/final.md", encoding="utf-8").read()
+        assert "Fact two (Wiki, 2026; Kazuhisa Wada, 2026)." in out, out
+        assert "- Kazuhisa Wada (2026). セガ — https://sega.example/\n- Wiki (2026). Wiki — https://w.example/a\n" in out, out
+
         write(f"{d}/draft.md", "Bad [C009] and [C003].\n")
         r = subprocess.run([sys.executable, BUILD, d], capture_output=True, text=True)
         assert r.returncode == 1 and "unknown claim C009" in r.stderr and "C003 has no Supports" in r.stderr, r.stderr

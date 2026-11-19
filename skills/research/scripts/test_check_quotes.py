@@ -45,6 +45,9 @@ def main():
         assert "  C002 (3): draft.md:3" in r.stdout, r.stdout
         assert "C001 (" not in r.stdout, r.stdout
         assert "1 quotes checked, 1 problems" in r.stdout, r.stdout
+        write(f"{d}/cut.md", "S001 `Hello [...] next line` ok, S001 `next line […] Hello` wrong order\n")
+        r = check(d, "cut.md")
+        assert "NOT FOUND in S001: `next line […] Hello`" in r.stdout and "2 quotes checked, 1 problems" in r.stdout, r.stdout
 
         write(f"{d}/sources/S001/translation.ru.md", "---\nsource: S001\n---\n\n**Not authoritative.**\n\n"
                                                      "> 発売日・価格：未定\nДата и цена: не определены. `ignored` S999\n\n"

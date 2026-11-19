@@ -8,7 +8,8 @@
 - Every quote must appear verbatim in its source's original.md.
   Syntax: S012 `exact text`  or  S012: `exact text`.
   A bare `text` under a "## S012 ..." heading belongs to S012 (key phrases in sources.md).
-  Whitespace differences are ignored; everything else must match exactly.
+  Whitespace differences are ignored; everything else must match exactly. A cut marked
+  [...] or […] is allowed: every part must be present, in order.
 - Every S012 / C007 mentioned must exist (a sources/S012 folder, a "## C007" heading in claims.md).
 - In a translation file, every "> " line (a paragraph of the original) must appear verbatim
   in that source's original.md, so the bilingual view shows the real original.
@@ -36,6 +37,19 @@ def load(research_dir, sid, cache):
         else:
             cache[sid] = None
     return cache[sid]
+
+
+def found(quote, text):
+    """Quote in text; a cut marked [...] or […] needs every part present, in order."""
+    pos = 0
+    for part in re.split(r"\s*\[(?:\.\.\.|…)\]\s*", quote):
+        part = " ".join(part.split())
+        if part:
+            pos = text.find(part, pos)
+            if pos < 0:
+                return False
+            pos += len(part)
+    return True
 
 
 def claim_credibility(research_dir):
@@ -100,7 +114,7 @@ def main():
                     src = load(rd, sid, cache)
                     if src is None:
                         problem(f"{where}: {sid} has no original.md: `{quote}`")
-                    elif " ".join(quote.split()) not in src[0]:
+                    elif not found(quote, src[0]):
                         problem(f"{where}: NOT FOUND in {sid}: `{quote}`")
                     elif src[1] == "model-fetch":
                         print(f"{where}: WARNING {sid} is model-fetch (may not be verbatim): `{quote}`")

@@ -29,7 +29,8 @@ not expand it, use that directory's path yourself.
 ## Folder
 
 `./research/<slug>/` relative to the current directory, unless the user names another place.
-`<slug>` is short latin kebab-case.
+`<slug>` is short latin kebab-case. Shared by all research in `./research/`: `PROFILE.md` (the
+user's standing preferences) and `methodologies/` (the user's own methodologies).
 
 ```
 STATE.md          where things stand: read first, keep current
@@ -49,27 +50,73 @@ sources/S001/translation.ru.md   bilingual reading copy for the user (step 6), n
 
 - Run `ls research/`. If the request matches an existing folder, or the user says "continue",
   read `STATE.md`, then `plan.md`, and tell the user where things stand in 2-3 lines before
-  doing anything else. Read `sources.md` and `claims.md` only as needed.
+  doing anything else. Read `sources.md` and `claims.md` only as needed. Load the
+  methodology named in Settings again: rules from an earlier session may have been compacted.
 - New research: `mkdir -p research/<slug>` and
   `cp -n ${CLAUDE_SKILL_DIR}/templates/*.md research/<slug>/`.
-- An older folder without `claims.md` or `factcheck-log.md`: copy those two templates in.
+- An older folder without `claims.md` or `factcheck-log.md`: copy those two templates in. One
+  without a Settings block: add it from the template, filled from what `STATE.md` already says.
 
 ## 1. Intake
 
-Find out, asking only what the request leaves unclear (one short round of questions):
+Fill the **Settings** block of `STATE.md`. Every later step follows it.
 
-- the question or topic; what the text is (technical article, essay, review...) and its audience
-- **user language**: the language for talking to the user, for the final text and for
-  translations. Default: the language the user writes in.
-- **languages the user reads**, and how well (for example "uk, ru, en; ja weak"). Sources in
-  other languages get a translation offer at checkpoints.
-- limits: time period, depth, what to exclude
+### Where settings come from
 
-Write it to `STATE.md`.
+Later sources override earlier ones:
+
+1. **Methodology defaults.** Load the methodology named in Settings (default `open`):
+   `research/methodologies/<name>.md` if the user has their own, otherwise
+   `${CLAUDE_SKILL_DIR}/methodologies/<name>.md`. List both folders when the user asks which
+   methodologies exist. Its rules on admissible sources, confirmation and wording apply on top
+   of this file. A methodology can only make the work stricter: it never relaxes the Rules at
+   the top (verbatim originals, checked quotes, no invented facts, the log).
+2. **`research/PROFILE.md`**: the user's standing preferences: user language, docs language,
+   languages they read, default methodology, Wayback snapshots. It holds no source rules;
+   those belong to methodologies.
+3. **The user's answers** for this research.
+
+### Quick mode (default)
+
+Take the defaults, ask only what the request leaves unclear (one short round of questions),
+then show the resulting Settings in two or three lines so the user can correct them.
+
+### Full mode
+
+When the user asks for detailed setup ("full setup", "детальная настройка"), send one
+questionnaire with every setting below, numbered, each with its current default, and let the
+user answer only what they want to change ("defaults for the rest").
+
+### The settings
+
+- **Question**, **Text type / audience** (technical article, essay, news piece, paper...)
+- **Methodology**: `open` (default), `journalism`, `academic`, or one of the user's own
+- **User language**: for talking to the user and for the final text. Default: the language
+  the user writes in.
+- **Docs language**: for `STATE.md`, `plan.md`, Notes, claims and the log. Default: the user
+  language. Quotes always stay in the original, and field names (`- Credibility:`,
+  `- Supports:`...) and IDs stay as in the templates, because the scripts read them.
+- **Reads**: languages the user reads, and how well ("uk, ru, en; ja weak")
+- **Translations**: `auto` (translate important sources in languages the user doesn't read,
+  without asking), `offer` (default), `off`
+- **Rumors**: `labeled` (in the text, marked as rumors), `leads-only` (collected and assessed
+  to steer the search, kept out of the text), `exclude` (also not searched for on purpose)
+- **Depth**: `quick` (2-4 subquestions, a few sources each), `standard` (4-10), `deep` (more
+  subquestions, primary sources chased down for every key claim)
+- **Limits**: time period, exclusions
+- **Wayback snapshots**: `off` (default; only existing snapshots are looked up) or `on` (new
+  public snapshots with `fetch.py --archive`)
+- **Citation style** for `final.md`: `footnotes`, `numbered`, `author-date`
+- **Quotes**: quotation marks for the final text; empty means by user language
+
+If `research/PROFILE.md` doesn't exist yet, ask the personal settings once (user language,
+docs language, reads, default methodology) and offer to save them there, so later research
+doesn't ask again. When the user states a lasting preference, offer to add it to the profile.
 
 ## 2. Plan
 
-Break the topic into 4-10 subquestions in `plan.md`. For each one:
+Break the topic into subquestions in `plan.md`, as many as Depth calls for. With
+`Rumors: exclude`, plan no subquestions about leaks or rumors. For each one:
 
 - what we need to find out and why it matters for the text
 - **search languages**, chosen by where the information originates, not by the user's
@@ -102,8 +149,8 @@ For each subquestion:
 
    This saves the text verbatim plus the raw page, looks up an existing Wayback snapshot,
    assigns the next ID and appends an entry to `sources.md`. Exit code 3 means the URL is
-   already saved (it prints the ID). Add `--archive` only if the user wants new public Wayback
-   snapshots (this publishes the URL). Use `--no-archive` for pages that shouldn't be sent to
+   already saved (it prints the ID). Add `--archive` only when Settings say `Wayback snapshots:
+   on` (it publishes the URL). Use `--no-archive` for pages that shouldn't be sent to
    archive.org at all.
 4. Complete that source's entry in `sources.md`:
    - **Author**, **Published**: as shown on the page; "unknown" if not shown. The publication
@@ -270,6 +317,9 @@ it to the user and **wait for approval or edits**, then note the approval in `ST
   `[C003]` or `[C001, C007]`. If the text needs a fact that isn't in `claims.md`, go back to
   Collect and Assess and add it first. Your own analysis and argument need no IDs, but they
   must not slip in new facts.
+- **Settings and methodology first.** With `Rumors: leads-only` or `exclude`, claims with
+  credibility 3 or worse stay out of the text. Follow the methodology's rules on which sources
+  may appear in the text and how to attribute them; the rules below are the default.
 - **Wording follows credibility:**
   - 1: state it as fact.
   - 2: attribute it: "according to <source>", "reportedly".
@@ -345,9 +395,10 @@ wording, change `draft.md` and regenerate.
 Translations exist only so the user can read sources in languages they don't know. You keep
 working from `original.md`: never cite, quote or assess from a translation.
 
-**When**: when the user asks ("translate S010", "translate the Japanese sources"). At
-checkpoints, offer translations of the important sources written in languages the user
-doesn't read.
+**When**: by the Translations setting, for the important sources written in languages the
+user doesn't read (Reads): `auto` translate them without asking, after each assessment;
+`offer` offer them at checkpoints; `off` only when the user asks. The user can always ask
+directly ("translate S010", "translate the Japanese sources").
 
 **File**: `sources/Sxxx/translation.<user language>.md`, for example `translation.ru.md`.
 Start it from `${CLAUDE_SKILL_DIR}/templates/sources/translation.md` and fill in the front matter.

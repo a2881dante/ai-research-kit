@@ -3,8 +3,13 @@
 An agent skill for evidence-first research for articles and essays. It works in Claude Code,
 Codex and Gemini CLI: the skill is plain Markdown plus stdlib-only Python scripts.
 
-What it does (v0.6):
+What it does (v0.7):
 
+- works by a methodology you pick: `open` (default: everything, rumors labeled), `journalism`
+  (attribution, two-source rule, rumors only as news), `academic` (peer-reviewed and primary
+  sources, no rumors, author-date citations), or your own
+- quick setup by default, or a full questionnaire ("full setup"); standing preferences live in
+  `research/PROFILE.md` so they aren't asked again
 - breaks a topic into subquestions and agrees the plan with you before searching
 - searches in the languages the information comes from (Japanese, Ukrainian, English...),
   independent of the language you write in
@@ -59,6 +64,17 @@ was made, I'm writing an essay, write to me in Ukrainian"*. The agent creates
 `./research/<slug>/`, proposes a plan, waits for your OK, then collects sources.
 Next session: *"continue the mother-3 research"*.
 
+## Methodologies
+
+Built in: [open](skills/research/methodologies/open.md),
+[journalism](skills/research/methodologies/journalism.md),
+[academic](skills/research/methodologies/academic.md). To add your own (an outlet's style
+guide, Wikipedia's rules, a journal's requirements), copy one of them into
+`research/methodologies/<name>.md` next to your research folders and edit it; files there win
+over built-in ones with the same name and survive plugin updates. Keep the same sections
+(Settings, Sources, Confirmation, In the text, Extra checks). A methodology can only make the
+work stricter: verbatim originals, quote checks and the fact-check log always apply.
+
 ## Research folder format
 
 Any future tool or integration (Zotero, court archives, PDF import) only needs to produce this
@@ -66,8 +82,11 @@ layout. The easiest way is to register text through the same script:
 `fetch.py <dir> <url> --text-file <file> --capture <tool-name>`.
 
 ```
+research/
+  PROFILE.md            your standing preferences (languages, default methodology...)
+  methodologies/        your own methodologies
 research/<slug>/
-  STATE.md              current state, read first
+  STATE.md              current state and Settings, read first
   plan.md               subquestions Q1..Qn: languages, queries, status
   sources.md            "## S001 — title" entries: URL, Archive, Accessed, Language,
                         Capture, Author, Published, Type, Rating, Origin, Subquestions,

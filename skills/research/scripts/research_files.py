@@ -40,6 +40,7 @@ def parse_sources(text):
             "archive": archive.group(0) if archive else "",
             "rating": rating[0] if rating[:1] in tuple("ABCDEF") else "",
             "origin": _field(b, "Origin"),
+            "author": _field(b, "Author"),
             "published": _field(b, "Published"),
             "type": _field(b, "Type"),
             "capture": _field(b, "Capture"),
