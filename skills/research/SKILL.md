@@ -1,6 +1,6 @@
 ---
 name: research
-description: Evidence-first research for articles, essays and reports. Use when the user wants to research a topic or question, gather and fact-check sources for a piece of writing, or continue an existing research folder. Breaks the topic into subquestions, searches widely in whatever languages the information originates in, saves verbatim copies of every source with an index, rates source reliability and claim credibility with a logged fact-check, and keeps session state on disk so nothing is lost between sessions.
+description: Evidence-first research for articles, essays and reports. Use when the user wants to research a topic or question, gather and fact-check sources for a piece of writing, or continue an existing research folder. Breaks the topic into subquestions, searches widely in whatever languages the information originates in, saves verbatim copies of every source with an index, rates source reliability and claim credibility with a logged fact-check, drafts the text with every fact cited and every quote verified, and keeps session state on disk so nothing is lost between sessions.
 allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/fetch.py *), Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/check_quotes.py *)
 ---
 
@@ -37,6 +37,8 @@ plan.md           question -> subquestions Q1..Qn, languages, queries
 sources.md        index of sources S001..; written by fetch.py, fields completed by you
 claims.md         checkable facts C001.. with credibility and evidence quotes
 factcheck-log.md  append-only reasoning behind every rating
+draft.md          the text: facts cite claims [C001], quotes are verified; draft.v1.md... older versions
+final.md          clean copy for publishing, generated from draft.md on request
 sources/S001/original.md   verbatim text + front matter (url, accessed, archive, capture...)
 sources/S001/raw.html      the page exactly as downloaded
 ```
@@ -227,13 +229,76 @@ rewrite old entries): date and IDs, what was checked, how, what was found, and t
 
 Finish with the quote check (it checks `claims.md` too) and fix anything it reports.
 
-## 5. Checkpoints
+## 5. Draft
+
+Start when the user asks for the text. The claims it needs should be assessed, and the quote
+check should be clean.
+
+### Outline
+
+Write the outline as the skeleton of `draft.md` (copy the template if it's missing): a title,
+the sections, and under each section a comment listing the claims it will use, such as
+`<!-- claims: C001, C003, C010 -->`. Fit it to the text type and audience in `STATE.md`. Show
+it to the user and **wait for approval or edits**, then note the approval in `STATE.md`.
+
+### Writing rules
+
+- Write in the user language, in the register of the text type (an essay reads differently
+  from a technical article).
+- **Facts come only from `claims.md`.** Every factual sentence ends with its claim IDs:
+  `[C003]` or `[C001, C007]`. If the text needs a fact that isn't in `claims.md`, go back to
+  Collect and Assess and add it first. Your own analysis and argument need no IDs, but they
+  must not slip in new facts.
+- **Wording follows credibility:**
+  - 1: state it as fact.
+  - 2: attribute it: "according to <source>", "reportedly".
+  - 3: present it as a rumor or leak and name its origin: "a leak on Xiaohongshu claims...".
+  - 4-5: only if it matters for the text, and openly as doubtful or refuted, next to the
+    better evidence.
+  - 6: leave it out, or say it can't be verified.
+  - Claims resting only on D or E sources always name their source in the sentence.
+- **Contradictions**: show both sides with their evidence.
+- **Absence claims carry their date**: "as of September 2026, no release date had been
+  announced", taken from the claim's As of.
+- **Direct quotes**: the original copied exactly from the source, then its translation into
+  the user language, marked as a translation: S010 `原文` — «перевод» (перевод). No translation
+  if the quote is already in the user language. Translate faithfully: no smoothing, no added
+  certainty, and keep the hedges. Never quote a `model-fetch` source.
+- End with `## Sources`: each cited source once, with ID, title, URL, archive link and rating
+  letter.
+
+### Check
+
+After writing, and after every revision, run:
+
+```
+python3 ${CLAUDE_SKILL_DIR}/scripts/check_quotes.py research/<slug> draft.md
+```
+
+It verifies the quotes, reports unknown C/S IDs, and lists the cited claims with credibility
+3-6. Re-read every sentence it lists, and fix any that presents a rumor or doubt as fact.
+
+### Revisions
+
+The user may ask to shorten, change the emphasis, drop the rumors, or restructure. Before a
+large rewrite, copy the current text to `draft.v<N>.md` (next free N) so earlier versions stay
+available, then edit `draft.md`. Note in `STATE.md` what changed and why. A request that needs
+new facts goes back to Collect and Assess.
+
+`draft.md` keeps its claim IDs and backtick quotes: that is what keeps it checkable. When the
+user wants a clean copy to publish, write `final.md` from `draft.md`: claim IDs become
+footnotes pointing to the sources (title, URL), and quotes take the text's normal quotation
+marks, with the original in a footnote when the text shows a translation. Regenerate
+`final.md` from `draft.md` each time; never edit it on its own.
+
+## 6. Checkpoints
 
 Update `STATE.md`:
 
 - after the plan is approved
 - after each subquestion, or every ~5 sources
 - after each assessment
+- after the outline is approved, and after each draft version
 - whenever the user states a preference or makes a decision
 - before ending a turn that did significant work
 
@@ -244,4 +309,5 @@ credibility and source IDs, contradictions, gaps, proposed leads.
 
 ## Not in this version yet
 
-Drafting the final text with verified quotes, and translations, come in later versions.
+Full translations of sources come in a later version. Until then, translate only the quotes
+used in the draft.

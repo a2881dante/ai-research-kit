@@ -3,7 +3,7 @@
 An agent skill for evidence-first research for articles and essays. It works in Claude Code,
 Codex and Gemini CLI: the skill is plain Markdown plus stdlib-only Python scripts.
 
-What it does (v0.2):
+What it does (v0.3):
 
 - breaks a topic into subquestions and agrees the plan with you before searching
 - searches in the languages the information comes from (Japanese, Ukrainian, English...),
@@ -13,7 +13,9 @@ What it does (v0.2):
 - writes the facts the text needs into `claims.md`, each with exact quotes as evidence
 - rates sources (reliability A–F) and claims (credibility 1–6) with the Admiralty code, traces
   rumors back to their origin, and logs the reasoning in `factcheck-log.md`
-- checks every quote by exact match against the saved original
+- drafts the text from the assessed claims: every fact cites its claim, rumors are worded as
+  rumors, quotes keep the original next to the translation; earlier versions are kept
+- checks every quote by exact match against the saved original, and every claim/source ID
 - keeps the session state in `STATE.md`, so a new session picks up where the last one stopped
 
 ## Install
@@ -67,6 +69,9 @@ research/<slug>/
   claims.md             "## C001 — claim" entries: Q, Credibility, Origin, Supports,
                         Contradicts, As of
   factcheck-log.md      append-only reasoning behind every rating
+  draft.md              the text; facts cite [C001], quotes S012 `original` — «translation»
+  draft.v1.md ...       earlier versions
+  final.md              clean copy for publishing, generated from draft.md on request
   sources/S001/
     original.md         YAML front matter + verbatim text. Never edited.
     raw.html            the page as downloaded (or original.pdf etc.)
@@ -84,7 +89,7 @@ S012. `check_quotes.py <dir>` verifies them all.
 1. ✅ Plan, source collection, index, session state
 2. ✅ Trust ratings (Admiralty code: source reliability A–F, information credibility 1–6),
    `claims.md`, fact-check log
-3. Draft with quotes checked by exact match against originals
+3. ✅ Draft with quotes checked by exact match against originals
 4. Translations stored next to originals (for reading only; the agent works from originals)
 
 Known gaps: `fetch.py` can't read JavaScript-rendered pages and is blocked by some sites

@@ -13,24 +13,38 @@ def write(path, text):
         f.write(text)
 
 
+def check(*args):
+    return subprocess.run([sys.executable, CHECK, *args], capture_output=True, text=True)
+
+
 def main():
     with tempfile.TemporaryDirectory() as d:
         write(f"{d}/sources/S001/original.md", '---\ncapture: "script"\n---\n\n発売日・価格：未定\n\nHello   world\nnext line\n')
         write(f"{d}/sources/S003/original.md", '---\ncapture: "model-fetch"\n---\n\nsummary text\n')
         write(f"{d}/sources.md", "# Sources\n\n## S001 — t\n- Key phrases: `発売日・価格：未定`, `Hello world next`\n"
-                                 "  - `missing phrase`\n\n## S003 — t\n- Key phrases: `summary text`\n")
-        write(f"{d}/claims.md", "## C001 — x\n- Supports: S001 `world next line`, S001: `Hello world`\n"
-                                "- Contradicts: S002 `anything`\n- Note: bare `code` outside S sections is ignored\n")
-        r = subprocess.run([sys.executable, CHECK, d], capture_output=True, text=True)
+                                 "  - `missing phrase`\n\n## S003 — t\n- Key phrases: `summary text`\n"
+                                 "- Notes: same origin as S001/S004\n")
+        write(f"{d}/claims.md", "## C001 — x\n- Credibility: 1 — ok\n- Supports: S001 `world next line`, S001: `Hello world`\n"
+                                "- Contradicts: S002 `anything`\n- Note: bare `code` outside S sections is ignored\n\n"
+                                "## C002 — rumor\n- Credibility: 3 — leak\n")
+        r = check(d)
         out = r.stdout
         assert r.returncode == 1, out
         assert "sources.md:5: NOT FOUND in S001: `missing phrase`" in out, out
-        assert "claims.md:3: S002 has no original.md" in out, out
+        assert "sources.md:9: unknown source S004" in out and "unknown source S001" not in out, out
+        assert "claims.md:4: S002 has no original.md" in out and "unknown source S002" not in out, out
         assert "WARNING S003 is model-fetch" in out, out
-        assert "7 quotes checked, 2 problems" in out, out
+        assert "7 quotes checked, 3 problems" in out, out
 
-        r = subprocess.run([sys.executable, CHECK, d, "claims.md"], capture_output=True, text=True)
-        assert "3 quotes checked, 1 problems" in r.stdout, r.stdout
+        assert "3 quotes checked, 1 problems" in check(d, "claims.md").stdout
+
+        write(f"{d}/draft.md", "# Draft\n\nAnnounced [C001]. Leak says September [C002], also [C002, C009].\n"
+                               "Quote: S001 `発売日・価格：未定` — «дата и цена не определены» (перевод).\n")
+        r = check(d, "draft.md")
+        assert "draft.md:3: unknown claim C009" in r.stdout, r.stdout
+        assert "  C002 (3): draft.md:3" in r.stdout, r.stdout
+        assert "C001 (" not in r.stdout, r.stdout
+        assert "1 quotes checked, 1 problems" in r.stdout, r.stdout
     print("ok")
 
 
