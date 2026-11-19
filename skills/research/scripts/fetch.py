@@ -125,13 +125,20 @@ def download(url):
         return body[:MAX_BYTES], r.headers, r.url, len(body) > MAX_BYTES
 
 
+def wayback_lookup(url):
+    """Closest existing Wayback snapshot: returns (snapshot_url, timestamp) or (None, None)."""
+    api = "https://archive.org/wayback/available?url=" + urllib.parse.quote(to_uri(url), safe="")
+    with urllib.request.urlopen(api, timeout=30) as r:
+        snap = json.load(r).get("archived_snapshots", {}).get("closest", {})
+    return (snap["url"], snap.get("timestamp")) if snap.get("available") else (None, None)
+
+
 def archive(url, save):
     """Find an existing Wayback snapshot. With save=True first ask Wayback to make a new,
     public one: that publishes the URL, so it's opt-in."""
-    uri = to_uri(url)
     if save:
         try:
-            req = urllib.request.Request("https://web.archive.org/save/" + uri, headers={"User-Agent": UA})
+            req = urllib.request.Request("https://web.archive.org/save/" + to_uri(url), headers={"User-Agent": UA})
             with urllib.request.urlopen(req, timeout=90) as r:
                 loc = r.headers.get("Content-Location")
                 if loc:
@@ -141,14 +148,21 @@ def archive(url, save):
         except Exception:
             pass
     try:
-        api = "https://archive.org/wayback/available?url=" + urllib.parse.quote(uri, safe="")
-        with urllib.request.urlopen(api, timeout=30) as r:
-            snap = json.load(r).get("archived_snapshots", {}).get("closest", {})
+        snap_url, _ = wayback_lookup(url)
     except Exception as e:
         return f"unknown (lookup failed: {e})"
-    if snap.get("available"):
-        return snap["url"] + " (existing snapshot, may differ from accessed version)"
-    return "none"
+    return snap_url + " (existing snapshot, may differ from accessed version)" if snap_url else "none"
+
+
+def download_via_wayback(url):
+    """Fallback for a failed live fetch: download the closest snapshot, toolbar-free via the
+    id_ modifier. Returns (body, headers, snapshot_url, truncated), or None if no snapshot."""
+    snap_url, ts = wayback_lookup(url)
+    if not snap_url:
+        return None
+    raw = f"https://web.archive.org/web/{ts}id_/{to_uri(url)}" if ts else snap_url
+    body, headers, _, truncated = download(raw)
+    return body, headers, snap_url, truncated
 
 
 def next_id_dir(sources_dir):
@@ -196,12 +210,25 @@ def main():
     else:
         try:
             body, headers, final_url, truncated = download(a.url)
+            meta["capture"] = "script"
+            if final_url != to_uri(a.url):
+                meta["final_url"] = final_url
         except Exception as e:
-            print(f"FAILED to download {a.url}: {e}", file=sys.stderr)
-            sys.exit(1)
-        meta["capture"] = "script"
-        if final_url != to_uri(a.url):
+            fb = wb_err = None  # live fetch failed (403/DNS/timeout): fall back to a Wayback snapshot
+            if not a.no_archive:
+                try:
+                    fb = download_via_wayback(a.url)
+                except Exception as we:
+                    wb_err = we  # surface it: a transient archive.org hiccup is worth a retry
+            if not fb:
+                extra = f"; Wayback fallback also failed: {wb_err}" if wb_err else "; no Wayback snapshot"
+                print(f"FAILED to download {a.url}: {e}{extra}", file=sys.stderr)
+                sys.exit(1)
+            body, headers, final_url, truncated = fb
+            meta["capture"] = "wayback"
             meta["final_url"] = final_url
+            meta["live_fetch_error"] = str(e)
+            meta["archive"] = final_url + " (existing snapshot; LIVE FETCH FAILED, this is the archived copy)"
         if truncated:
             meta["truncated"] = f"first {MAX_BYTES} bytes only"
         ctype = headers.get_content_type()
@@ -226,7 +253,8 @@ def main():
                   f"--min-chars 0 if the page is legitimately short.", file=sys.stderr)
             sys.exit(4)
 
-    meta["archive"] = "skipped" if a.no_archive else archive(a.url, a.archive)
+    if "archive" not in meta:
+        meta["archive"] = "skipped" if a.no_archive else archive(a.url, a.archive)
     sid = next_id_dir(os.path.join(a.research_dir, "sources"))
     folder = os.path.join(a.research_dir, "sources", sid)
     if raw:
