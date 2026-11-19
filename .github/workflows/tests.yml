@@ -1,0 +1,30 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  scripts:
+    strategy:
+      fail-fast: false
+      matrix:
+        # Ubuntu installs poppler, so the PDF extraction path runs; macOS checks the refusal path.
+        os: [ubuntu-latest, macos-latest]
+        python: ["3.9", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install poppler (PDF text)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+      - name: Run self-checks
+        working-directory: skills/research/scripts/tests
+        run: |
+          python test_fetch.py
+          python test_check_quotes.py
+          python test_build_final.py
+          python test_report.py

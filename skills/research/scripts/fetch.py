@@ -16,6 +16,7 @@ Stdlib only (PDF text needs one of the tools above).
 import argparse
 import datetime
 import gzip
+import hashlib
 import io
 import json
 import mimetypes
@@ -325,6 +326,7 @@ def main():
     if raw:
         with open(os.path.join(folder, raw[1]), "wb") as f:
             f.write(raw[0])
+    meta["sha256"] = hashlib.sha256(text.encode("utf-8")).hexdigest()  # check_quotes.py detects later edits
     front = "\n".join(f"{k}: {json.dumps(v, ensure_ascii=False)}" for k, v in {"id": sid, **meta}.items() if v)
     with open(os.path.join(folder, "original.md"), "w", encoding="utf-8") as f:
         f.write(f"---\n{front}\n---\n\n{text}")

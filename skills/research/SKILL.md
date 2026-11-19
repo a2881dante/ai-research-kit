@@ -162,8 +162,10 @@ For each subquestion:
    the user to install one (`brew install poppler` or `pip install pypdf`), or use the
    fallback below.
 4. Complete that source's entry in `sources.md`:
-   - **Author**, **Published**: as shown on the page; "unknown" if not shown. The publication
-     date matters: later events can make a source outdated.
+   - **Author**, **Published**: as shown on the page; "unknown" if not shown. Write the date
+     as `YYYY-MM-DD` first, then any comment ("2026-06-07 (snapshot 2026-07-20)"): the report
+     computes dates from it. The publication date matters: later events can make a source
+     outdated.
    - **Type**: official, press, wiki, blog, forum, imageboard, social, paper, court record...
    - **Rating**, **Origin**: leave empty until step 4.
    - **Subquestions**: the Q ids it helps with
@@ -209,10 +211,15 @@ Write the facts the text will need into `claims.md`, one checkable fact per clai
 - **Q**: subquestion ids
 - **Credibility**: 1-6 (scale below) and a few words why
 - **Origin**: who said it first, as far as you can trace it
-- **Supports** / **Contradicts**: evidence lines, each `` - S012 `exact quote` ``
-- **As of**: the publication date of the **newest** evidence, not today's date. This matters
-  most for absence claims ("no release date announced"): they are only as fresh as the latest
-  source saying so, so cite the newest one you have.
+- **Supports** / **Contradicts**: evidence lines, each `` - S012 `exact quote` ``. Each quote
+  must state the claim itself, or the part of it that this line supports. A quote that is
+  merely from the same source ("set in Vice City" under "released on 19 November") is not
+  evidence.
+
+The report computes each claim's **as of** date: the publication date of its newest dated
+evidence. That date matters most for absence claims ("no release date announced"): they are
+only as fresh as the latest source saying so, so cite the newest one you have. Don't write an
+As of field yourself.
 
 Findings belong in `claims.md`. `STATE.md` only says which claims exist and what is open; if
 it has an older "Findings" section, replace it with a short pointer to `claims.md`.
@@ -225,12 +232,16 @@ For each claim, and for each source you rate:
   Reports with the same wording, the same images or the same "insider" share an origin.
   Record it in the source's **Origin** field in `sources.md`: `own` when the source is itself
   the origin (a primary source, or reporting with its own sourcing), otherwise a short label
-  shared by every source retelling the same thing, such as `xhs-leak-2026-05`. A source that
-  carries facts from different origins (Wikipedia, roundups) gets the label per evidence line
-  in `claims.md`: `` - S001 `exact quote` (origin: sega-2026-08) ``. The report counts
-  independent confirmations from these labels.
+  shared by every source retelling the same thing, such as `rockstar`, `sensor-tower` or
+  `xhs-leak-2026-05`: lowercase latin, digits and hyphens, one label, no description. A
+  source that carries facts from different origins (Wikipedia, roundups, news pieces quoting
+  several parties) gets its main label here and a label per evidence line in `claims.md`:
+  `` - S001 `exact quote` (origin: sega-2026-08) ``. The report counts independent
+  confirmations from these labels, so the same origin must get the same label everywhere.
 - **Count independent confirmations, not repetitions.** Ten sites retelling one leak are one
-  source. Two outlets citing the same press release are one source.
+  source. Two outlets citing the same press release are one source: an official announcement
+  reported by the press has the company as its origin (`rockstar`), however reliable the
+  outlets are. Without the company's own page saved, such a claim stays at 2.
 - **Look for the primary source**: official site, store page, press release, court docket,
   the original post. If it exists, save it and cite it. A primary you only know about
   secondhand ("Sega confirmed..." in a Wikipedia article, a trailer you haven't seen) is not
@@ -301,9 +312,14 @@ Finish with the quote check (it checks `claims.md` too), then the report:
 python3 ${CLAUDE_SKILL_DIR}/scripts/report.py research/<slug>
 ```
 
-It counts independent origins per claim and warns about credibility 1 without a primary or
-a second origin, As of dates newer than the evidence, and sources missing a rating or origin.
-Fix each warning, or record in the log why it stands.
+It counts independent origins per claim, computes each claim's as-of date, and warns about
+credibility 1 without a primary or a second origin, Origin fields that aren't a single label,
+and sources missing a rating or origin. Fix each warning, or record in the log why it stands.
+
+Then do an **evidence review**: for every claim, read each evidence quote and ask whether it
+states the claim. Remove quotes that don't, and lower the credibility if too little evidence
+is left. If you can run a subagent, give this to a fresh one with only `claims.md`: it sees
+the quotes without remembering the sources.
 
 ## 5. Draft
 
@@ -344,7 +360,7 @@ it to the user and **wait for approval or edits**, then note the approval in `ST
   - Claims resting only on D or E sources always name their source in the sentence.
 - **Contradictions**: show both sides with their evidence.
 - **Absence claims carry their date**: "as of September 2026, no release date had been
-  announced", taken from the claim's As of.
+  announced", taken from the claim's as-of date in the report.
 - **Direct quotes**: the original copied exactly from the source, then its translation into
   the user language, marked as a translation: S010 `原文` — «перевод» (перевод). No translation
   if the quote is already in the user language. Translate faithfully: no smoothing, no added
@@ -376,7 +392,7 @@ by sentence and compare each one with the claims it cites. Look for:
   says (an Xbox store blurb is not "Atlus says").
 - **unmarked facts**: a factual sentence without claim IDs. IDs at the end of a sentence
   cover all of it, so check every factual part, including intro clauses ("after a decade of
-  rumors...").
+  rumors..."). Headings and the title count too ("A release 13 years in the making").
 - **misused [CK]**: a common-knowledge mark on something that isn't widely known and stable,
   or that touches the main topic. Turn it into a claim.
 
@@ -404,7 +420,9 @@ The script turns claim IDs into footnotes listing the supporting sources (title,
 archive link), shows translated quotes in the text with the original in the footnote, puts
 quotes in the user language into normal quotation marks, and drops comments and the working
 Sources section. It stops on unknown IDs, so run the quote check first. To change the
-wording, change `draft.md` and regenerate.
+wording, change `draft.md` and regenerate. The report warns when `final.md` differs from what
+the script builds. If the generated citations look wrong or clumsy, tell the user rather than
+fixing `final.md` by hand: the fix belongs in the script.
 
 ## 6. Translations
 

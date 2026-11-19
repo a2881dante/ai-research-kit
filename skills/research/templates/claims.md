@@ -11,4 +11,3 @@
 - Supports:
   - Snnn `exact quote`
 - Contradicts:
-- As of:

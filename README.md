@@ -3,7 +3,7 @@
 An agent skill for evidence-first research for articles and essays. It works in Claude Code,
 Codex and Gemini CLI: the skill is plain Markdown plus stdlib-only Python scripts.
 
-What it does (v0.9):
+What it does (v0.11):
 
 - works by a methodology you pick: `open` (default: everything, rumors labeled), `journalism`
   (attribution, two-source rule, rumors only as news), `academic` (peer-reviewed and primary
@@ -99,7 +99,7 @@ research/<slug>/
                         Capture, Author, Published, Type, Rating, Origin, Subquestions,
                         Key phrases, Notes
   claims.md             "## C001 — claim" entries: Q, Credibility, Origin, Supports,
-                        Contradicts, As of
+                        Contradicts (as-of dates are computed by report.py)
   factcheck-log.md      append-only reasoning behind every rating
   draft.md              the text; facts cite [C001], quotes S012 `original` — «translation»
   draft.v1.md ...       earlier versions
@@ -118,6 +118,16 @@ research/<slug>/
 Quotes are written as S012 `exact text`; under a `## S012` heading a bare `text` belongs to
 S012. `check_quotes.py <dir>` verifies them all.
 
+## Upgrading
+
+[CHANGELOG.md](CHANGELOG.md) lists what changed in each version and how to upgrade research
+folders made by an older one. The report and the quote check also say what to fix.
+
+## How rules are enforced
+
+[docs/enforcement.md](docs/enforcement.md) lists every rule the agent must follow and what
+catches a violation: a script, a fresh-subagent review, or nothing ("model only").
+
 ## Roadmap
 
 1. ✅ Plan, source collection, index, session state
@@ -131,9 +141,15 @@ Known gaps: `fetch.py` can't read JavaScript-rendered pages and is blocked by so
 
 ## Test
 
+CI runs these on Linux and macOS with Python 3.9 and 3.13 (`.github/workflows/tests.yml`).
+
 ```sh
-python3 skills/research/scripts/test_fetch.py
-python3 skills/research/scripts/test_check_quotes.py
-python3 skills/research/scripts/test_build_final.py
-python3 skills/research/scripts/test_report.py
+python3 skills/research/scripts/tests/test_fetch.py
+python3 skills/research/scripts/tests/test_check_quotes.py
+python3 skills/research/scripts/tests/test_build_final.py
+python3 skills/research/scripts/tests/test_report.py
 ```
+
+## License
+
+MIT, see [LICENSE](LICENSE).

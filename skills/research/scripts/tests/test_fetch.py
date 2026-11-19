@@ -1,4 +1,4 @@
-"""Self-check for fetch.py against a local server: python3 test_fetch.py"""
+"""Self-check for fetch.py against a local server: python3 tests/test_fetch.py"""
 import importlib.util
 import os
 import shutil
@@ -8,7 +8,8 @@ import tempfile
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-FETCH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fetch.py")
+SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # the scripts live one level up
+FETCH = os.path.join(SCRIPTS, "fetch.py")
 # Shift_JIS declared only in <meta>, with a cp932-only char (①) and noise that must be dropped.
 PAGE = ('<html lang="ja"><head><meta charset="Shift_JIS"><title>テスト: 記事</title>'
         '<script>var s = "SCRIPT_TEXT";</script></head><body><svg><title>ICON</title></svg><svg/>'
@@ -78,6 +79,9 @@ def main():
         assert "SCRIPT_TEXT" not in orig and "ICON" not in orig
         assert 'lang: "ja"' in orig and 'title: "テスト: 記事"' in orig and 'charset: "cp932"' in orig
         assert os.path.exists(os.path.join(d, "sources", "S001", "raw.html"))
+        assert subprocess.run([sys.executable, os.path.join(os.path.dirname(FETCH), "check_quotes.py"), d, "sources.md"],
+                              capture_output=True, text=True).returncode == 0  # fresh hash matches
+        assert 'sha256: "' in orig
 
         r = run(d, base + "/a")
         assert r.returncode == 3 and "S001" in r.stdout, (r.returncode, r.stdout)

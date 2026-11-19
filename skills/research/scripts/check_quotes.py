@@ -11,16 +11,19 @@
   Encoding differences are ignored (whitespace, Unicode normalization, full/half-width forms,
   invisible characters, curly vs straight quotes, dash variants); the words must match. A cut marked
   [...] or […] is allowed: every part must be present, in order.
+- Every original.md saved with a sha256 must still match it: originals are never edited.
 - Every S012 / C007 mentioned must exist (a sources/S012 folder, a "## C007" heading in claims.md).
 - In a translation file, every "> " line (a paragraph of the original) must appear verbatim
   in that source's original.md, so the bilingual view shows the real original.
 - In draft files, [CK] marks a common-knowledge fact. Allowed only with "Common knowledge: on"
   in STATE.md; then every [CK] line is listed for review.
-- For draft files, lists cited claims with credibility 3-6, so you can check they read as
+- With "Rumors: leads-only" or "exclude" in STATE.md, a draft citing a claim with
+  credibility 3-6 is a problem. Otherwise the draft check lists cited claims with credibility 3-6, so you can check they read as
   rumor or doubt, not fact.
 Exit 0 if no problems, 1 otherwise.
 """
 import glob
+import hashlib
 import os
 import re
 import sys
@@ -92,12 +95,25 @@ def main():
         [f for f in ("sources.md", "claims.md", "draft.md") if os.path.exists(os.path.join(rd, f))]
         + sorted(os.path.relpath(p, rd) for p in glob.glob(os.path.join(rd, "sources", "S*", "translation.*.md"))))
     claims = claim_credibility(rd)
+    edited = []
+    for path in sorted(glob.glob(os.path.join(rd, "sources", "S*", "original.md"))):
+        with open(path, encoding="utf-8") as f:
+            front, _, body = f.read().partition("\n---\n\n")
+        m = re.search(r'^sha256: "([0-9a-f]{64})"$', front, re.M)
+        if m and hashlib.sha256(body.encode("utf-8")).hexdigest() != m.group(1):
+            edited.append(os.path.basename(os.path.dirname(path)))
     cache, checked, problems = {}, 0, 0
+    problems += len(edited)
+    for sid in edited:
+        print(f"sources/{sid}/original.md was edited after it was saved (its sha256 no longer matches); "
+              f"originals must stay as fetched")
     weak = {}  # claim id -> ["draft.md:12", ...]
     ck = []  # draft lines with [CK] (common knowledge, not collected)
     state = os.path.join(rd, "STATE.md")
     m = re.search(r"^- Common knowledge:[ \t]*(\w*)", open(state, encoding="utf-8").read() if os.path.exists(state) else "", re.M)
     ck_allowed = bool(m) and m.group(1).lower() == "on"
+    m = re.search(r"^- Rumors:[ \t]*([\w-]*)", open(state, encoding="utf-8").read() if os.path.exists(state) else "", re.M)
+    rumors_out = bool(m) and m.group(1).lower() in ("leads-only", "exclude")
 
     def problem(msg):
         nonlocal problems
@@ -144,7 +160,11 @@ def main():
                     if cid not in claims:
                         problem(f"{where}: unknown claim {cid}")
                     elif is_draft and claims[cid] in ("3", "4", "5", "6"):
-                        weak.setdefault(cid, []).append(where)
+                        if rumors_out:
+                            problem(f"{where}: {cid} has credibility {claims[cid]}, but Settings keep rumors out of "
+                                    f"the text (Rumors: leads-only/exclude)")
+                        else:
+                            weak.setdefault(cid, []).append(where)
                 if is_draft and "[CK]" in line and not line.lstrip().startswith("<!--"):
                     if ck_allowed:
                         ck.append(where)

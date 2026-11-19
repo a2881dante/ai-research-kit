@@ -1,10 +1,11 @@
-"""Self-check for check_quotes.py: python3 test_check_quotes.py"""
+"""Self-check for check_quotes.py: python3 tests/test_check_quotes.py"""
 import os
 import subprocess
 import sys
 import tempfile
 
-CHECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "check_quotes.py")
+SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # the scripts live one level up
+CHECK = os.path.join(SCRIPTS, "check_quotes.py")
 
 
 def write(path, text):
@@ -66,9 +67,25 @@ def main():
         write(f"{d}/draft.md", "Tokyo is the capital [CK]. Fact [C001].\n")
         r = check(d, "draft.md")
         assert "draft.md:1: [CK] used, but Settings say Common knowledge: off" in r.stdout, r.stdout
+        write(f"{d}/STATE.md", "## Settings\n- Rumors: leads-only <!-- x -->\n")
+        write(f"{d}/draft.md", "Rumor [C002].\n")
+        r = check(d, "draft.md")
+        assert "draft.md:1: C002 has credibility 3, but Settings keep rumors out" in r.stdout, r.stdout
+        write(f"{d}/draft.md", "Tokyo is the capital [CK]. Fact [C001].\n")
         write(f"{d}/STATE.md", "## Settings\n- Common knowledge: on <!-- off | on -->\n")
         r = check(d, "draft.md")
         assert r.returncode == 0 and "Common-knowledge facts [CK]" in r.stdout and "  draft.md:1" in r.stdout, r.stdout
+        # a saved original carries its hash; editing the text afterwards is reported
+        import hashlib
+        os.makedirs(f"{d}/sources/S006")
+        body = "Original text.\n"
+        write(f"{d}/sources/S006/original.md",
+              f'---\ncapture: "script"\nsha256: "{hashlib.sha256(body.encode()).hexdigest()}"\n---\n\n{body}')
+        assert "S006/original.md was edited" not in check(d, "uni.md").stdout
+        with open(f"{d}/sources/S006/original.md", "a", encoding="utf-8") as f:
+            f.write("Cleaned up.\n")
+        r = check(d, "uni.md")
+        assert r.returncode == 1 and "sources/S006/original.md was edited" in r.stdout, r.stdout
     print("ok")
 
 
