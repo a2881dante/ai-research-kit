@@ -171,7 +171,9 @@ For each claim, and for each source you rate:
   evidence by itself: the evidence is the source describing it. For videos, save the video
   page or a transcript if you can get one.
 - **Check dates.** Was the claim true when published? Did later events overtake it? An old
-  article saying "no release date yet" may now be wrong.
+  article saying "no release date yet" may now be wrong. Compare dates across sources for the
+  same event: a report published *before* the date another source gives for the event means
+  one of them is wrong. Record that under Contradicts.
 - **Check the author or account**: track record, past corrections, account age, whether they
   name their sources.
 - **Look for signs of fabrication**: AI-generated images, edited screenshots, no archive trail,
@@ -289,11 +291,15 @@ by sentence and compare each one with the claims it cites. Look for:
   "mechanics", "reportedly" turning into "confirmed").
 - **wrong attribution**: the quote or statement belongs to someone else than the sentence
   says (an Xbox store blurb is not "Atlus says").
-- **unmarked facts**: a factual sentence without claim IDs.
+- **unmarked facts**: a factual sentence without claim IDs. IDs at the end of a sentence
+  cover all of it, so check every factual part, including intro clauses ("after a decade of
+  rumors...").
 
-If you can run a subagent, give this review to a fresh one with only `claims.md` and
-`draft.md`, because it has no memory of the sources to fill gaps from. Fix everything it
-finds, then rerun the script.
+If you can run a subagent, give this review to a fresh one with only `claims.md`, `draft.md`
+and `sources.md` (for who said each quote), because it has no memory of the source texts to
+fill gaps from. Fix what it finds, then rerun the script. After 2-3 rounds, stop: show the
+remaining flags to the user to accept or reject, since by then they are mostly matters of
+style.
 
 ### Revisions
 
