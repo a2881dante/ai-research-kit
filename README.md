@@ -73,7 +73,8 @@ research/<slug>/
 ```
 
 `capture` records how the text was obtained: `script` (verbatim download), `user-paste`, or
-`model-fetch` (possibly summarized by the agent's tool, so don't quote from it).
+`model-fetch` (possibly summarized by the agent's tool, so don't quote from it), or `wayback`
+(the live page failed and `fetch.py` saved the closest Wayback snapshot instead).
 
 Quotes are written as S012 `exact text`; under a `## S012` heading a bare `text` belongs to
 S012. `check_quotes.py <dir>` verifies them all.

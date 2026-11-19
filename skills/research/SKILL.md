@@ -103,15 +103,18 @@ For each subquestion:
    - **Author**, **Published**: as shown on the page; "unknown" if not shown. The publication
      date matters: later events can make a source outdated.
    - **Type**: official, press, wiki, blog, forum, imageboard, social, paper, court record...
-   - **Rating**: leave empty until step 4.
+   - **Rating**: leave empty until step 4 (reliability letter plus its reason).
    - **Subquestions**: the Q ids it helps with
    - **Key phrases**: 2-5 short phrases copied **exactly** from `original.md`, in the original
      language, one per line as `` - `phrase` ``. They locate the relevant fragments.
    - **Notes**: one or two lines on what it says for which Q. Facts, not judgments.
 5. If the download fails (exit 1) or too little text comes out (exit 4: JavaScript-only page,
-   Cloudflare, login wall), try in this order:
-   - another URL for the same content: an archive snapshot, `old.reddit.com`, a mobile or
-     print version, a thread's plain-text or JSON view;
+   Cloudflare, login wall), try in this order. (When the live page fails, `fetch.py` already
+   falls back to the closest Wayback snapshot by itself and marks it `capture: wayback`. That
+   copy is verbatim and quotable, but it shows the page as of the snapshot date, so note that
+   date in Published or Notes.)
+   - another URL for the same content: `old.reddit.com`, a mobile or print version, a thread's
+     plain-text or JSON view;
    - your own web-fetch tool. Save what it returns to a temporary file and register it with
      `fetch.py research/<slug> "<url>" --text-file <file> --capture model-fetch`. Many such
      tools summarize pages, so in Notes write "not verbatim, don't quote" unless you are sure
@@ -145,9 +148,12 @@ Write the facts the text will need into `claims.md`, one checkable fact per clai
 - **Credibility**: 1-6 (scale below) and a few words why
 - **Origin**: who said it first, as far as you can trace it
 - **Supports** / **Contradicts**: evidence lines, each `` - S012 `exact quote` ``
-- **As of**: the date the assessment holds for. Mark claims that later events could change.
+- **As of**: the publication date of the **newest** evidence, not today's date. This matters
+  most for absence claims ("no release date announced"): they are only as fresh as the latest
+  source saying so, so cite the newest one you have.
 
-Findings belong in `claims.md`. `STATE.md` only says which claims exist and what is open.
+Findings belong in `claims.md`. `STATE.md` only says which claims exist and what is open; if
+it has an older "Findings" section, replace it with a short pointer to `claims.md`.
 
 ### How to check
 
@@ -158,7 +164,10 @@ For each claim, and for each source you rate:
 - **Count independent confirmations, not repetitions.** Ten sites retelling one leak are one
   source. Two outlets citing the same press release are one source.
 - **Look for the primary source**: official site, store page, press release, court docket,
-  the original post. If it exists, save it and cite it.
+  the original post. If it exists, save it and cite it. A primary you only know about
+  secondhand ("Sega confirmed..." in a Wikipedia article, a trailer you haven't seen) is not
+  evidence by itself: the evidence is the source describing it. For videos, save the video
+  page or a transcript if you can get one.
 - **Check dates.** Was the claim true when published? Did later events overtake it? An old
   article saying "no release date yet" may now be wrong.
 - **Check the author or account**: track record, past corrections, account age, whether they
@@ -185,23 +194,36 @@ For each claim, and for each source you rate:
 
 **Information credibility** (what is said), a number in `claims.md`:
 
-1. confirmed: by the primary source or by independent sources
+1. confirmed: the primary source is saved in this folder and cited, or at least two
+   independent saved sources agree. A single secondary or tertiary source caps a claim at 2,
+   however plausible it is.
 2. probably true: consistent with what is known, not independently confirmed
 3. possibly true: plausible, nothing confirms or refutes it
 4. doubtful: possible, but there are reasons against
 5. improbable: contradicted by better evidence
 6. cannot be judged
 
-In `sources.md` the rating combines the letter with the typical credibility of what the source
-contributed, plus a short reason: `- Rating: D3 — repost of the Xiaohongshu leak, no
-independent sourcing`. Each claim gets its own number in `claims.md`. A reliable source can
-carry a doubtful claim, and a forum can turn out right: rate them separately.
+A source gets **only the letter**, and numbers belong only to claims. A reliable source can
+carry a doubtful claim, and a forum can turn out right, so the two are rated separately and
+each judgment lives in one place.
+
+The letter always comes with its reason, so the user can see why the source was trusted or
+not and disagree. The reason answers three questions in one line:
+
+- **who**: type of source, outlet or author
+- **how they know**: primary, citing a named source, or no sourcing
+- **flags**: track record, staleness, signs of fabrication, the source's own hedges
+
+It ends with the date of the log entry that holds the full reasoning:
+
+`- Rating: D — anonymous repost on a content site; no sourcing, retells the Xiaohongshu leak;
+same origin as S005/S007 (log 2026-11-19)`
 
 ### Log
 
 Every rating and every rating change gets an entry in `factcheck-log.md` (append-only, never
 rewrite old entries): date and IDs, what was checked, how, what was found, and the result
-(`S007 -> D3; C012 -> 3`). A rating without a log entry is unfinished work.
+(`S007 -> C; C012 -> 3`). A rating without a log entry is unfinished work.
 
 Finish with the quote check (it checks `claims.md` too) and fix anything it reports.
 
