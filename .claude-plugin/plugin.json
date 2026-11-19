@@ -1,6 +1,6 @@
 {
   "name": "research-kit",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Evidence-first research for articles and essays: subquestion plans, multilingual search, verbatim source copies with an index, session state on disk.",
   "author": { "name": "Danylo Chabanovskyi" }
 }
