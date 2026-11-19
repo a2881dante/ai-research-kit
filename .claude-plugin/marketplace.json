@@ -1,0 +1,14 @@
+{
+  "name": "research-kit",
+  "description": "Research skills for writers: verbatim sources, multilingual search, session state.",
+  "owner": {
+    "name": "Danylo Chabanovskyi"
+  },
+  "plugins": [
+    {
+      "name": "research-kit",
+      "source": "./",
+      "description": "Evidence-first research for articles and essays."
+    }
+  ]
+}
