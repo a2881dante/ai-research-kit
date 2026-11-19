@@ -266,7 +266,7 @@ def main():
 
     entry = (f"## {sid} — {meta['title'] or a.url}\n- URL: {a.url}\n- Archive: {meta['archive']}\n"
              f"- Accessed: {meta['accessed'][:10]}\n- Language: {meta['lang']}\n- Capture: {meta['capture']}\n"
-             f"- Author: \n- Published: \n- Type: \n- Rating: \n- Subquestions: \n- Key phrases: \n- Notes: \n\n")
+             f"- Author: \n- Published: \n- Type: \n- Rating: \n- Origin: \n- Subquestions: \n- Key phrases: \n- Notes: \n\n")
     with open(index, "a", encoding="utf-8") as f:
         f.write(("# Sources\n\n" if not existing else "") + entry)
     print(f"{sid} saved: {folder}/original.md ({len(text)} chars, lang={meta['lang'] or '?'}, "
