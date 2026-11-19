@@ -3,7 +3,7 @@
 An agent skill for evidence-first research for articles and essays. It works in Claude Code,
 Codex and Gemini CLI: the skill is plain Markdown plus stdlib-only Python scripts.
 
-What it does (v0.7):
+What it does (v0.8):
 
 - works by a methodology you pick: `open` (default: everything, rumors labeled), `journalism`
   (attribution, two-source rule, rumors only as news), `academic` (peer-reviewed and primary
@@ -55,7 +55,11 @@ mkdir -p ~/.agents/skills && ln -s ~/src/research-kit/skills/research ~/.agents/
 
 To develop locally in Claude Code, run `claude --plugin-dir .` in this repo.
 
-Requires `python3` (3.9+).
+Requires `python3` (3.9+). For text from PDFs, install `pdftotext` (`brew install poppler`)
+or `pypdf` (`pip install pypdf`); without them PDFs are refused with a hint.
+
+Permissions in Claude Code: the skill pre-approves its own scripts, but only for the turn in
+which it was invoked. If Claude asks again later, choose "always allow" for that script.
 
 ## Use
 

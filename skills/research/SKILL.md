@@ -148,10 +148,16 @@ For each subquestion:
    ```
 
    This saves the text verbatim plus the raw page, looks up an existing Wayback snapshot,
-   assigns the next ID and appends an entry to `sources.md`. Exit code 3 means the URL is
-   already saved (it prints the ID). Add `--archive` only when Settings say `Wayback snapshots:
-   on` (it publishes the URL). Use `--no-archive` for pages that shouldn't be sent to
-   archive.org at all.
+   assigns the next ID and appends an entry to `sources.md`. Exit code 3 means the page is
+   already saved (it prints the ID); variants of the same URL (http/https, `www.`, mobile
+   `m.`, tracking parameters, trailing slash, a redirect) count as the same page. Add
+   `--archive` only when Settings say `Wayback snapshots: on` (it publishes the URL). Use
+   `--no-archive` for pages that shouldn't be sent to archive.org at all.
+
+   PDFs are saved as `original.pdf` with their text in `original.md`, split by `[page N]`
+   markers: use them for page numbers. Exit code 5 means no PDF text tool is installed: ask
+   the user to install one (`brew install poppler` or `pip install pypdf`), or use the
+   fallback below.
 4. Complete that source's entry in `sources.md`:
    - **Author**, **Published**: as shown on the page; "unknown" if not shown. The publication
      date matters: later events can make a source outdated.

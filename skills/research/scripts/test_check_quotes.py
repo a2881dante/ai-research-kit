@@ -56,6 +56,13 @@ def main():
         assert "translation.ru.md:13: original paragraph not found in S001: Hello brave world" in r.stdout, r.stdout
         assert "3 quotes checked, 1 problems" in r.stdout, r.stdout
         assert "translation.ru.md:13" in check(d).stdout
+        # Same words, different encoding: NFD ї, full-width colon, NBSP, soft hyphen, curly quotes, em dash.
+        os.makedirs(f"{d}/sources/S005")
+        write(f"{d}/sources/S005/original.md",
+              '---\ncapture: "script"\n---\n\nКиїв： “so­ft” — ok\n')
+        write(f"{d}/uni.md", 'S005 `Київ: "soft" - ok`, S005 `Київ: hard`\n')
+        r = check(d, "uni.md")
+        assert "2 quotes checked, 1 problems" in r.stdout and "`Київ: hard`" in r.stdout, r.stdout
     print("ok")
 
 

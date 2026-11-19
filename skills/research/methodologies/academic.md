@@ -38,7 +38,8 @@ this file.
 - Hedge according to credibility ("suggests", "according to", "it has been claimed").
 - Keep your own argument visibly separate from what sources say.
 - Paraphrases are cited as well as quotes.
-- When a source has pages (books, PDFs), note the page in the claim's evidence line, such as
+- When a source has pages (books, PDFs: see the `[page N]` markers in `original.md`), note the
+  page in the claim's evidence line, such as
   `` - S004 `exact quote` (p. 37) ``, and give it in the text.
 
 ## Extra checks

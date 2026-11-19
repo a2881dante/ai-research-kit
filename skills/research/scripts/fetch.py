@@ -6,17 +6,23 @@
   fetch.py <research_dir> <url> --text-file FILE --capture model-fetch|user-paste|<tool>
       Register text obtained some other way (fallback, or another tool/integration).
 
-Exit codes: 0 saved, 1 download failed, 3 already saved (prints the ID),
-4 too little text extracted (nothing saved; see --min-chars).
-Stdlib only.
+PDFs: text is extracted with [page N] markers if pdftotext (poppler) or pypdf is installed.
+
+Exit codes: 0 saved, 1 download failed, 3 already saved (prints the ID; URLs are compared
+ignoring scheme, www/m. prefixes, tracking parameters and the like), 4 too little text
+extracted (nothing saved; see --min-chars), 5 PDF but no PDF text tool installed.
+Stdlib only (PDF text needs one of the tools above).
 """
 import argparse
 import datetime
 import gzip
+import io
 import json
 import mimetypes
 import os
 import re
+import shutil
+import subprocess
 import sys
 import urllib.parse
 import urllib.request
@@ -98,6 +104,47 @@ def to_uri(url):
     safe = "/?#[]@!$&'()*+,;=%:~"
     return urllib.parse.urlunsplit((p.scheme, netloc, urllib.parse.quote(p.path, safe=safe),
                                     urllib.parse.quote(p.query, safe=safe), ""))
+
+
+def pdf_text(body):
+    """(text with [page N] markers, tool name) via pdftotext (poppler) or pypdf, whichever is
+    installed; (None, None) if neither is."""
+    pages, tool = None, None
+    if shutil.which("pdftotext"):
+        r = subprocess.run(["pdftotext", "-enc", "UTF-8", "-", "-"], input=body, capture_output=True, timeout=300)
+        if r.returncode != 0:
+            raise RuntimeError(f"pdftotext failed: {r.stderr.decode('utf-8', 'replace').strip()}")
+        pages, tool = r.stdout.decode("utf-8", "replace").split("\f"), "pdftotext"
+    else:
+        try:
+            import pypdf
+        except ImportError:
+            return None, None
+        pages, tool = [p.extract_text() or "" for p in pypdf.PdfReader(io.BytesIO(body)).pages], "pypdf"
+    pages = [p.strip() for p in pages]
+    while pages and not pages[-1]:  # pdftotext ends with a form feed
+        pages.pop()
+    # ponytail: words hyphenated across lines stay split; quote them as they appear in original.md
+    return "".join(f"[page {i}]\n\n{p}\n\n" for i, p in enumerate(pages, 1)), tool
+
+
+TRACKING = re.compile(r"utm_\w+|fbclid|gclid|yclid|dclid|msclkid|mc_cid|mc_eid|igshid|si|ref_src|ref_url")
+
+
+def url_key(url):
+    """What makes two URLs the same page, for duplicate detection: scheme, www./m./old./amp.
+    prefixes, the en.m. mobile segment, case of the host, percent-encoding, trailing slash,
+    fragment, tracking parameters and parameter order don't count."""
+    p = urllib.parse.urlsplit(url.strip())
+    host = (p.hostname or "").lower()
+    host = re.sub(r"^(?:www|m|mobile|old|amp)\.", "", host).replace(".m.", ".")
+    if not host.isascii():
+        host = host.encode("idna").decode()
+    port = f":{p.port}" if p.port not in (None, 80, 443) else ""
+    path = urllib.parse.unquote(p.path).rstrip("/") or "/"
+    query = sorted((k, v) for k, v in urllib.parse.parse_qsl(p.query, keep_blank_values=True)
+                   if not TRACKING.fullmatch(k))
+    return host + port + path + ("?" + urllib.parse.urlencode(query) if query else "")
 
 
 def decode(body, header_charset):
@@ -196,10 +243,15 @@ def main():
         sys.exit("url must start with http:// or https://")
     index = os.path.join(a.research_dir, "sources.md")
     existing = open(index, encoding="utf-8").read() if os.path.exists(index) else ""
-    known = {u: sid for sid, u in re.findall(r"^## (S\d+).*\n- URL: (.*)$", existing, re.M)}
-    if a.url in known:
-        print(f"{known[a.url]} already saved: {a.url}")
-        sys.exit(3)
+    known = {url_key(u): (sid, u) for sid, u in re.findall(r"^## (S\d+).*\n- URL: (.*)$", existing, re.M)}
+
+    def stop_if_known(url):
+        if url_key(url) in known:
+            sid, saved = known[url_key(url)]
+            print(f"{sid} already saved: {saved}" + (f" (same page as {url})" if saved != url else ""))
+            sys.exit(3)
+
+    stop_if_known(a.url)
 
     meta = {"url": a.url, "title": a.title, "lang": "",
             "accessed": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%MZ")}
@@ -213,6 +265,7 @@ def main():
             meta["capture"] = "script"
             if final_url != to_uri(a.url):
                 meta["final_url"] = final_url
+                stop_if_known(final_url)  # a redirect can land on a page that's already saved
         except Exception as e:
             fb = wb_err = None  # live fetch failed (403/DNS/timeout): fall back to a Wayback snapshot
             if not a.no_archive:
@@ -240,6 +293,18 @@ def main():
             text, meta["lang"] = p.text(), p.lang
             meta["title"] = a.title or " ".join(p.title.split())
             raw = (body, "raw.html")
+        elif ctype == "application/pdf" or body[:5] == b"%PDF-":
+            try:
+                text, meta["pdf_text"] = pdf_text(body)
+            except Exception as e:
+                print(f"FAILED to extract text from the PDF at {a.url}: {e}", file=sys.stderr)
+                sys.exit(1)
+            if text is None:
+                print(f"{a.url} is a PDF and no PDF text tool is installed; nothing saved. Ask the user to "
+                      f"install one (`brew install poppler` or `pip install pypdf`) and run again, or use the "
+                      f"fallback (--text-file, capture model-fetch).", file=sys.stderr)
+                sys.exit(5)
+            raw = (body, "original.pdf")
         elif ctype.startswith("text/") or ctype.endswith(("json", "xml")):
             text, meta["charset"] = decode(body, headers.get_content_charset())
         else:

@@ -8,7 +8,8 @@
 - Every quote must appear verbatim in its source's original.md.
   Syntax: S012 `exact text`  or  S012: `exact text`.
   A bare `text` under a "## S012 ..." heading belongs to S012 (key phrases in sources.md).
-  Whitespace differences are ignored; everything else must match exactly. A cut marked
+  Encoding differences are ignored (whitespace, Unicode normalization, full/half-width forms,
+  invisible characters, curly vs straight quotes, dash variants); the words must match. A cut marked
   [...] or […] is allowed: every part must be present, in order.
 - Every S012 / C007 mentioned must exist (a sources/S012 folder, a "## C007" heading in claims.md).
 - In a translation file, every "> " line (a paragraph of the original) must appear verbatim
@@ -21,29 +22,41 @@ import glob
 import os
 import re
 import sys
+import unicodedata
 
 QUOTE = re.compile(r"(?:\b(S\d{3,})\b:?\s*)?`([^`\n]+)`")
+# Differences in how the same text is encoded, not in what it says: they never fail a quote.
+INVISIBLE = dict.fromkeys(map(ord, "­​‌‍⁠﻿"))  # soft hyphen, zero-width
+TYPOGRAPHY = str.maketrans("‘’‚‛“”„‟‐‑‒–—―−",
+                           "''''\"\"\"\"-------")
+
+
+def norm(text):
+    """NFKC (composed letters, full/half width, NBSP), no invisible characters, plain quotes
+    and dashes, collapsed whitespace."""
+    text = unicodedata.normalize("NFKC", text).translate(INVISIBLE).translate(TYPOGRAPHY)
+    return " ".join(text.split())
 
 
 def load(research_dir, sid, cache):
-    """(whitespace-collapsed text, capture) of a source, or None if it has no original.md."""
+    """(normalized text, capture) of a source, or None if it has no original.md."""
     if sid not in cache:
         path = os.path.join(research_dir, "sources", sid, "original.md")
         if os.path.exists(path):
             with open(path, encoding="utf-8") as f:
                 text = f.read()
             m = re.search(r'^capture: "(.*)"$', text, re.M)
-            cache[sid] = (" ".join(text.split()), m.group(1) if m else "")
+            cache[sid] = (norm(text), m.group(1) if m else "")
         else:
             cache[sid] = None
     return cache[sid]
 
 
 def found(quote, text):
-    """Quote in text; a cut marked [...] or […] needs every part present, in order."""
+    """Quote in normalized text; a cut marked [...] or […] needs every part present, in order."""
     pos = 0
     for part in re.split(r"\s*\[(?:\.\.\.|…)\]\s*", quote):
-        part = " ".join(part.split())
+        part = norm(part)
         if part:
             pos = text.find(part, pos)
             if pos < 0:
@@ -98,7 +111,7 @@ def main():
                     if text:
                         checked += 1
                         src = load(rd, tr.group(1), cache)
-                        if src is None or " ".join(text.split()) not in src[0]:
+                        if src is None or not found(text, src[0]):
                             problem(f"{where}: original paragraph not found in {tr.group(1)}: {text[:60]}")
                     continue
                 if line.startswith("## "):
