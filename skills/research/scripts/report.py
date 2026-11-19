@@ -83,8 +83,9 @@ def report(sources, claims, draft):
         if s["origin"] and s["origin"] != "own":
             groups.setdefault(s["origin"], []).append(sid)
     unused = [cid for cid in claims if cid not in cited] if cited else []
+    ck = [ln for ln, line in enumerate(draft.splitlines(), 1) if "[CK]" in line]
     return {"claims": out_claims, "sources": out_sources, "origins": groups,
-            "unused_in_draft": unused, "warnings": warnings}
+            "unused_in_draft": unused, "common_knowledge_lines": ck, "warnings": warnings}
 
 
 def main():
@@ -106,6 +107,8 @@ def main():
         print("Shared origins (one origin behind several sources):")
         for o, sids in r["origins"].items():
             print(f"  {o}: {', '.join(sids)}")
+    if r["common_knowledge_lines"]:
+        print(f"Common-knowledge facts [CK], not checked: draft lines {', '.join(map(str, r['common_knowledge_lines']))}")
     if r["unused_in_draft"]:
         print(f"Not used in draft: {', '.join(r['unused_in_draft'])}")
     if r["warnings"]:

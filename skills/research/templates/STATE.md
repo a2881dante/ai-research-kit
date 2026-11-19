@@ -19,6 +19,7 @@
 - Wayback snapshots: off <!-- on = request new public snapshots with fetch.py --archive -->
 - Citation style: footnotes <!-- footnotes | numbered | author-date -->
 - Quotes: <!-- quotation marks such as «» or “”; empty = by user language -->
+- Common knowledge: off <!-- on = background facts may be marked [CK] in the draft instead of becoming claims -->
 
 ## Decisions and user preferences
 

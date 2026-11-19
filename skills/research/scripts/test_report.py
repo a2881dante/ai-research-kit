@@ -75,7 +75,7 @@ def main():
   - S003 `g`
 - As of: 2026-05-30
 """)
-        write(f"{d}/draft.md", "<!-- claims: C001,\n C005 -->\nText [C001]. More [C002, C003].\nAnd [C004] [C009].\n")
+        write(f"{d}/draft.md", "<!-- claims: C001,\n C005 -->\nText [C001]. More [C002, C003].\nAnd [C004] [C009].\nKnown [CK].\n")
         r = subprocess.run([sys.executable, REPORT, d], capture_output=True, text=True)
         out = r.stdout
         assert r.returncode == 1, out
@@ -85,6 +85,7 @@ def main():
         assert "C004: credibility 1, but one origin (S001)" in out, out
         assert "S005: no Rating letter" in out and "S005: no Origin" in out, out
         assert "draft: unknown claim C009" in out, out
+        assert "Common-knowledge facts [CK], not checked: draft lines 5" in out, out
         assert "xhs-leak: S002, S003" in out and "Not used in draft: C005" in out, out
         s = json.load(open(f"{d}/summary.json", encoding="utf-8"))
         assert s["claims"]["C003"]["origins"] == ["sega-aug", "famitsu"], s["claims"]["C003"]

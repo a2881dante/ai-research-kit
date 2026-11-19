@@ -108,6 +108,9 @@ user answer only what they want to change ("defaults for the rest").
   public snapshots with `fetch.py --archive`)
 - **Citation style** for `final.md`: `footnotes`, `numbered`, `author-date`
 - **Quotes**: quotation marks for the final text; empty means by user language
+- **Common knowledge**: `off` (default: every fact goes through Collect and Assess) or `on`
+  (background facts may be marked `[CK]` in the draft instead, see step 5). It saves time on
+  overview texts and costs certainty, so turn it on only when the user asks.
 
 If `research/PROFILE.md` doesn't exist yet, ask the personal settings once (user language,
 docs language, reads, default methodology) and offer to save them there, so later research
@@ -323,6 +326,11 @@ it to the user and **wait for approval or edits**, then note the approval in `ST
   `[C003]` or `[C001, C007]`. If the text needs a fact that isn't in `claims.md`, go back to
   Collect and Assess and add it first. Your own analysis and argument need no IDs, but they
   must not slip in new facts.
+- **Common knowledge**, only with `Common knowledge: on`: a background fact may end with
+  `[CK]` instead of claim IDs ("Tokyo is the capital of Japan [CK]"). It must be widely known
+  and stable, and never: about the main topic of the research, an exact number or date the
+  argument relies on, contested, a rumor, or a quote. When unsure, make it a claim. Methodology
+  rules on citations still apply. In `final.md` the mark disappears without a citation.
 - **Settings and methodology first.** With `Rumors: leads-only` or `exclude`, claims with
   credibility 3 or worse stay out of the text. Follow the methodology's rules on which sources
   may appear in the text and how to attribute them; the rules below are the default.
@@ -369,6 +377,8 @@ by sentence and compare each one with the claims it cites. Look for:
 - **unmarked facts**: a factual sentence without claim IDs. IDs at the end of a sentence
   cover all of it, so check every factual part, including intro clauses ("after a decade of
   rumors...").
+- **misused [CK]**: a common-knowledge mark on something that isn't widely known and stable,
+  or that touches the main topic. Turn it into a claim.
 
 If you can run a subagent, give this review to a fresh one with only `claims.md`, `draft.md`
 and `sources.md` (for who said each quote), because it has no memory of the source texts to

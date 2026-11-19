@@ -3,13 +3,16 @@
 An agent skill for evidence-first research for articles and essays. It works in Claude Code,
 Codex and Gemini CLI: the skill is plain Markdown plus stdlib-only Python scripts.
 
-What it does (v0.8):
+What it does (v0.9):
 
 - works by a methodology you pick: `open` (default: everything, rumors labeled), `journalism`
   (attribution, two-source rule, rumors only as news), `academic` (peer-reviewed and primary
   sources, no rumors, author-date citations), or your own
 - quick setup by default, or a full questionnaire ("full setup"); standing preferences live in
   `research/PROFILE.md` so they aren't asked again
+- every fact in the text goes through collection and fact-checking; for overview texts you can
+  switch on `Common knowledge`, which lets background facts be marked `[CK]` instead (listed for
+  review, never about the main topic)
 - breaks a topic into subquestions and agrees the plan with you before searching
 - searches in the languages the information comes from (Japanese, Ukrainian, English...),
   independent of the language you write in

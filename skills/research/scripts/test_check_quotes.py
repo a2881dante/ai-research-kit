@@ -63,6 +63,12 @@ def main():
         write(f"{d}/uni.md", 'S005 `Київ: "soft" - ok`, S005 `Київ: hard`\n')
         r = check(d, "uni.md")
         assert "2 quotes checked, 1 problems" in r.stdout and "`Київ: hard`" in r.stdout, r.stdout
+        write(f"{d}/draft.md", "Tokyo is the capital [CK]. Fact [C001].\n")
+        r = check(d, "draft.md")
+        assert "draft.md:1: [CK] used, but Settings say Common knowledge: off" in r.stdout, r.stdout
+        write(f"{d}/STATE.md", "## Settings\n- Common knowledge: on <!-- off | on -->\n")
+        r = check(d, "draft.md")
+        assert r.returncode == 0 and "Common-knowledge facts [CK]" in r.stdout and "  draft.md:1" in r.stdout, r.stdout
     print("ok")
 
 

@@ -10,7 +10,7 @@
     author-date  (Author, 2026) in the text and a source list sorted by author
 - S010 `original` — «translation» (перевод) -> «translation» in the text, original in a footnote.
 - S010 `original` (no translation) -> the quote in the text's quotation marks, cited.
-- HTML comments and the working "## Sources" section are dropped.
+- [CK] (common knowledge) marks, HTML comments and the working "## Sources" section are dropped.
 Style, quotation marks and language come from STATE.md (Citation style, Quotes, User language)
 unless given as options. Exit 1 on unknown IDs (run check_quotes.py first).
 """
@@ -113,6 +113,7 @@ def build(draft, sources, claims, lang, quotes, style="footnotes"):
         return mark(sids) if sids else ""
 
     text = re.sub(r"<!--.*?-->", "", draft, flags=re.S)
+    text = re.sub(r"\s?\[CK\]", "", text)  # common-knowledge marks get no citation
     text = re.split(r"^## (?:Sources|Источники|Джерела)\s*$", text, maxsplit=1, flags=re.M)[0]
     text = TOKEN.sub(lambda m: ref_sub(m) if m.group("refs") else quote_sub(m), text)
     text = re.sub(r"\n{3,}", "\n\n", text).strip() + "\n"

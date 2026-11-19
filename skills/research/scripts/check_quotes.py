@@ -14,6 +14,8 @@
 - Every S012 / C007 mentioned must exist (a sources/S012 folder, a "## C007" heading in claims.md).
 - In a translation file, every "> " line (a paragraph of the original) must appear verbatim
   in that source's original.md, so the bilingual view shows the real original.
+- In draft files, [CK] marks a common-knowledge fact. Allowed only with "Common knowledge: on"
+  in STATE.md; then every [CK] line is listed for review.
 - For draft files, lists cited claims with credibility 3-6, so you can check they read as
   rumor or doubt, not fact.
 Exit 0 if no problems, 1 otherwise.
@@ -92,6 +94,10 @@ def main():
     claims = claim_credibility(rd)
     cache, checked, problems = {}, 0, 0
     weak = {}  # claim id -> ["draft.md:12", ...]
+    ck = []  # draft lines with [CK] (common knowledge, not collected)
+    state = os.path.join(rd, "STATE.md")
+    m = re.search(r"^- Common knowledge:[ \t]*(\w*)", open(state, encoding="utf-8").read() if os.path.exists(state) else "", re.M)
+    ck_allowed = bool(m) and m.group(1).lower() == "on"
 
     def problem(msg):
         nonlocal problems
@@ -139,10 +145,19 @@ def main():
                         problem(f"{where}: unknown claim {cid}")
                     elif is_draft and claims[cid] in ("3", "4", "5", "6"):
                         weak.setdefault(cid, []).append(where)
+                if is_draft and "[CK]" in line and not line.lstrip().startswith("<!--"):
+                    if ck_allowed:
+                        ck.append(where)
+                    else:
+                        problem(f"{where}: [CK] used, but Settings say Common knowledge: off")
     if weak:
         print("Cited claims with credibility 3-6 (check they read as rumor or doubt, not fact):")
         for cid, places in sorted(weak.items()):
             print(f"  {cid} ({claims[cid]}): {', '.join(places)}")
+    if ck:
+        print("Common-knowledge facts [CK], not checked (each must be widely known, stable, not about "
+              "the main topic; otherwise make it a claim):")
+        print("  " + ", ".join(ck))
     print(f"{checked} quotes checked, {problems} problems")
     sys.exit(1 if problems else 0)
 
