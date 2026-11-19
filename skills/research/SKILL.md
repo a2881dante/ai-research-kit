@@ -41,6 +41,7 @@ draft.md          the text: facts cite claims [C001], quotes are verified; draft
 final.md          clean copy for publishing, generated from draft.md on request
 sources/S001/original.md   verbatim text + front matter (url, accessed, archive, capture...)
 sources/S001/raw.html      the page exactly as downloaded
+sources/S001/translation.ru.md   bilingual reading copy for the user (step 6), never evidence
 ```
 
 ## 0. Start or resume
@@ -57,8 +58,10 @@ sources/S001/raw.html      the page exactly as downloaded
 Find out, asking only what the request leaves unclear (one short round of questions):
 
 - the question or topic; what the text is (technical article, essay, review...) and its audience
-- **user language**: the language for talking to the user and for the final text (and later
-  for translations). Default: the language the user writes in.
+- **user language**: the language for talking to the user, for the final text and for
+  translations. Default: the language the user writes in.
+- **languages the user reads**, and how well (for example "uk, ru, en; ja weak"). Sources in
+  other languages get a translation offer at checkpoints.
 - limits: time period, depth, what to exclude
 
 Write it to `STATE.md`.
@@ -315,7 +318,44 @@ is the only working link when the live page is gone or blocked), and quotes take
 marks, with the original in a footnote when the text shows a translation. Regenerate
 `final.md` from `draft.md` each time; never edit it on its own.
 
-## 6. Checkpoints
+## 6. Translations
+
+Translations exist only so the user can read sources in languages they don't know. You keep
+working from `original.md`: never cite, quote or assess from a translation.
+
+**When**: when the user asks ("translate S010", "translate the Japanese sources"). At
+checkpoints, offer translations of the important sources written in languages the user
+doesn't read.
+
+**File**: `sources/Sxxx/translation.<user language>.md`, for example `translation.ru.md`.
+Start it from `${CLAUDE_SKILL_DIR}/templates/sources/translation.md` and fill in the front matter.
+
+**Format**: bilingual, paragraph by paragraph. Each paragraph of the original is copied
+exactly as a `> ` quote line, with its translation right under it, so the user can compare
+any passage. Copy paragraphs from `original.md` unchanged: the quote check verifies every
+`> ` line against it.
+
+**Scope**: translate short sources in full. For long ones (wiki articles, big threads),
+translate by default only the relevant parts (the paragraphs around the key phrases, plus
+the title and author/date lines) and list them in `scope`. Translate the full text if the
+user asks. Skip navigation, ads and comment widgets, and leave a one-line note where you skip.
+
+**Faithfulness**:
+
+- no summarizing, smoothing or "improving"; keep the tone, including slang and rudeness on
+  forums and imageboards
+- keep every hedge ("reportedly", "allegedly", 据说, らしい) and every number, date and name
+  exactly
+- names, titles and terms: give the original in parentheses at first mention, such as
+  Кусакабэ Ринко (久坂部凛子). Keep untranslatable terms in the original and add a short
+  gloss.
+- unclear passages: translate your best reading and mark it `[неясно: ...]` in the user
+  language, with the reason (slang, missing context, broken text)
+
+Add a `- Translation:` line (no backticks) to the source's entry in `sources.md` with the file
+name and scope, then run the quote check.
+
+## 7. Checkpoints
 
 Update `STATE.md`:
 
@@ -323,15 +363,12 @@ Update `STATE.md`:
 - after each subquestion, or every ~5 sources
 - after each assessment
 - after the outline is approved, and after each draft version
+- after translations are made
 - whenever the user states a preference or makes a decision
 - before ending a turn that did significant work
 
 Keep it short and current: replace stale lines instead of appending a diary.
 
 At each checkpoint, tell the user per subquestion: number of sources, key claims with their
-credibility and source IDs, contradictions, gaps, proposed leads.
-
-## Not in this version yet
-
-Full translations of sources come in a later version. Until then, translate only the quotes
-used in the draft.
+credibility and source IDs, contradictions, gaps, proposed leads, and translations worth
+offering.

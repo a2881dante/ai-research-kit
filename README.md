@@ -3,7 +3,7 @@
 An agent skill for evidence-first research for articles and essays. It works in Claude Code,
 Codex and Gemini CLI: the skill is plain Markdown plus stdlib-only Python scripts.
 
-What it does (v0.3):
+What it does (v0.4):
 
 - breaks a topic into subquestions and agrees the plan with you before searching
 - searches in the languages the information comes from (Japanese, Ukrainian, English...),
@@ -15,6 +15,8 @@ What it does (v0.3):
   rumors back to their origin, and logs the reasoning in `factcheck-log.md`
 - drafts the text from the assessed claims: every fact cites its claim, rumors are worded as
   rumors, quotes keep the original next to the translation; earlier versions are kept
+- translates sources you can't read into your language as a bilingual reading copy
+  (original paragraph, then translation); the agent itself keeps working from originals
 - checks every quote by exact match against the saved original, and every claim/source ID
 - keeps the session state in `STATE.md`, so a new session picks up where the last one stopped
 
@@ -75,6 +77,7 @@ research/<slug>/
   sources/S001/
     original.md         YAML front matter + verbatim text. Never edited.
     raw.html            the page as downloaded (or original.pdf etc.)
+    translation.ru.md   bilingual reading copy: "> original paragraph" + translation
 ```
 
 `capture` records how the text was obtained: `script` (verbatim download), `user-paste`, or
@@ -90,7 +93,7 @@ S012. `check_quotes.py <dir>` verifies them all.
 2. ✅ Trust ratings (Admiralty code: source reliability A–F, information credibility 1–6),
    `claims.md`, fact-check log
 3. ✅ Draft with quotes checked by exact match against originals
-4. Translations stored next to originals (for reading only; the agent works from originals)
+4. ✅ Translations stored next to originals (for reading only; the agent works from originals)
 
 Known gaps: `fetch.py` can't read JavaScript-rendered pages and is blocked by some sites
 (Cloudflare, 403); the skill falls back to the agent's own fetch tool or a user paste.

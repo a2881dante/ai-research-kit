@@ -2,17 +2,21 @@
 """Check quotes and references in a research folder.
 
   check_quotes.py <research_dir> [file ...]
-      Files are relative to research_dir. Default: sources.md claims.md draft.md (those that exist).
+      Files are relative to research_dir. Default: sources.md claims.md draft.md (those that
+      exist) and every sources/S*/translation.*.md.
 
 - Every quote must appear verbatim in its source's original.md.
   Syntax: S012 `exact text`  or  S012: `exact text`.
   A bare `text` under a "## S012 ..." heading belongs to S012 (key phrases in sources.md).
   Whitespace differences are ignored; everything else must match exactly.
 - Every S012 / C007 mentioned must exist (a sources/S012 folder, a "## C007" heading in claims.md).
+- In a translation file, every "> " line (a paragraph of the original) must appear verbatim
+  in that source's original.md, so the bilingual view shows the real original.
 - For draft files, lists cited claims with credibility 3-6, so you can check they read as
   rumor or doubt, not fact.
 Exit 0 if no problems, 1 otherwise.
 """
+import glob
 import os
 import re
 import sys
@@ -55,8 +59,9 @@ def main():
     if len(sys.argv) < 2:
         sys.exit(__doc__)
     rd = sys.argv[1]
-    files = sys.argv[2:] or [f for f in ("sources.md", "claims.md", "draft.md")
-                             if os.path.exists(os.path.join(rd, f))]
+    files = sys.argv[2:] or (
+        [f for f in ("sources.md", "claims.md", "draft.md") if os.path.exists(os.path.join(rd, f))]
+        + sorted(os.path.relpath(p, rd) for p in glob.glob(os.path.join(rd, "sources", "S*", "translation.*.md"))))
     claims = claim_credibility(rd)
     cache, checked, problems = {}, 0, 0
     weak = {}  # claim id -> ["draft.md:12", ...]
@@ -70,9 +75,18 @@ def main():
         path = os.path.join(rd, name)
         section = None
         is_draft = os.path.basename(name).startswith("draft")
+        tr = re.match(r"sources/(S\d{3,})/translation\.[\w-]+\.md$", name.replace(os.sep, "/"))
         with open(path, encoding="utf-8") as f:
             for ln, line in enumerate(f, 1):
                 where = f"{name}:{ln}"
+                if tr:  # translation file: only the quoted original paragraphs are checked
+                    text = line[1:].strip() if line.startswith(">") else ""
+                    if text:
+                        checked += 1
+                        src = load(rd, tr.group(1), cache)
+                        if src is None or " ".join(text.split()) not in src[0]:
+                            problem(f"{where}: original paragraph not found in {tr.group(1)}: {text[:60]}")
+                    continue
                 if line.startswith("## "):
                     m = re.match(r"## (S\d{3,})\b", line)
                     section = m and m.group(1)
