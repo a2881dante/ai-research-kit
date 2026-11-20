@@ -12,10 +12,14 @@ jobs:
         # Ubuntu installs poppler, so the PDF extraction path runs; macOS checks the refusal path.
         os: [ubuntu-latest, macos-latest]
         python: ["3.9", "3.13"]
+        # 3.9 is the python3 that ships with macOS; ubuntu-latest (26.04) has no 3.9 build.
+        exclude:
+          - os: ubuntu-latest
+            python: "3.9"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
       - name: Install poppler (PDF text)

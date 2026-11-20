@@ -185,7 +185,7 @@ Next:
 
 ## Test
 
-CI runs these on Linux and macOS with Python 3.9 and 3.13 (`.github/workflows/tests.yml`).
+CI runs these with Python 3.13 on Linux and macOS, and with 3.9 on macOS (`.github/workflows/tests.yml`).
 
 ```sh
 python3 skills/research/scripts/tests/test_fetch.py
