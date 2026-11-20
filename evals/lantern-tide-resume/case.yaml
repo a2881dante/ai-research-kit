@@ -1,0 +1,9 @@
+schema_version: "1.1"
+name: lantern-tide-resume
+description: >-
+  A research session that stopped mid-assessment. Planted mistakes in claims.md (a press price
+  error rated 1, a single-origin rumor rated 1, a stale hand-written As of) and preferences that
+  exist only on disk: the article is in Ukrainian and must not mention the budget.
+tags: [protocol, offline, resume]
+context:
+  scaffold_script: scaffold.sh

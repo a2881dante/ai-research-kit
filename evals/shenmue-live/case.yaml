@@ -1,0 +1,8 @@
+schema_version: "1.1"
+name: shenmue-live
+description: >-
+  Live web research from scratch on a settled but myth-laden topic: how much Shenmue (1999)
+  cost and where the figures come from. Scored here: the budget presented as disputed and
+  attributed. Measured outside the harness by evals/verify_live.py: do the cited URLs open,
+  and are the quoted words actually on the cited pages.
+tags: [live, web]

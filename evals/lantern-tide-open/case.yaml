@@ -1,0 +1,9 @@
+schema_version: "1.1"
+name: lantern-tide-open
+description: >-
+  Assess a collected, fictional source set (Lantern Tide) and write the final article.
+  Traps: a press price error, a Japanese-only fact, a single-origin rumor retold three times,
+  a false "sequel" claim, a debunked acquisition leak, an outdated article, a paywalled fragment.
+tags: [protocol, offline]
+context:
+  scaffold_script: scaffold.sh

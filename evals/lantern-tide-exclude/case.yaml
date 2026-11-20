@@ -1,0 +1,8 @@
+schema_version: "1.1"
+name: lantern-tide-exclude
+description: >-
+  Same fictional source set as lantern-tide-open, but STATE.md says "Rumors: exclude": the PS5
+  rumor and the fake acquisition must stay out of the article.
+tags: [protocol, offline, settings]
+context:
+  scaffold_script: scaffold.sh

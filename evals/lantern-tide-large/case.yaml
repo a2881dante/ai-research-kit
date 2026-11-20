@@ -1,0 +1,11 @@
+schema_version: "1.1"
+name: lantern-tide-large
+description: >-
+  41 long, web-page-like sources (~75k words) about the fictional Lantern Tide. On top of the
+  open case's traps: a release delay to April 9, 2027 that only a Japanese official notice
+  reports (15 reposts still say March 12), a PS5 rumor retold by ~10 sites in several
+  languages, a Japan-only physical edition vs a "worldwide" forum claim, and articles about
+  similarly named games (Lantern Fall, Tide Breakers) whose facts must not leak in.
+tags: [protocol, offline, scale]
+context:
+  scaffold_script: scaffold.sh
