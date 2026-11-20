@@ -121,7 +121,7 @@ without the skill, even with 41 long pages, a Japanese-only release delay, a rum
 times, similarly named games and a resumed session. So the skill doesn't improve the accuracy
 of the final text in these conditions. What it adds is the process and the trail: saved
 originals, a rated claim for every fact, origins, a fact-check log, verified quotes and a
-generated final copy, all reliably produced (47 of 48 plugin runs). It costs about 2-3x more
+generated final copy, all reliably produced (47 of 48 plugin runs here; 59 of 60 counting the live runs below). It costs about 2-3x more
 and takes about twice as long. Not measured yet: live web search, where the risk of citing
 pages the model never opened, or quotes that aren't on the page, is real.
 

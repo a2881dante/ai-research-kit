@@ -3,7 +3,47 @@
 An agent skill for evidence-first research for articles and essays. It works in Claude Code,
 Codex and Gemini CLI: the skill is plain Markdown plus stdlib-only Python scripts.
 
-What it does (v0.11):
+## Why use it
+
+Ask a model to research a topic and it writes a good article. What you can't easily do
+afterwards is check it: which page a quote came from, whether the model actually read that
+page, what a Japanese source really says, and how much each claim deserves to be trusted.
+
+research-kit keeps all of that in one folder on disk:
+
+- **Sources are saved, not just linked.** Every page is stored verbatim with its URL, access
+  date and an archive link, so a quote can always be checked against what was read, even
+  after the page changes or disappears.
+- **Every quote is verified.** A script matches each quote against the saved original. A quote
+  from a page that wasn't read, or with a changed word, fails the check.
+- **Sources in any language, with translations next to them.** It searches in the languages
+  the information comes from and gives you bilingual reading copies (original paragraph, then
+  translation) of sources you can't read. The work itself is done from the originals.
+- **Credibility in one place.** Each source gets a reliability rating and each claim a
+  credibility rating, with the reasoning logged. Ten sites retelling one forum post count as
+  one origin. Rumors stay in the research, labeled, and you decide how to use them.
+- **It survives sessions.** The state, decisions and your preferences live in the folder, so
+  a new session picks up where the last one stopped.
+
+What it doesn't do: it doesn't make a strong model more accurate when the sources are already
+in front of it. The measurements below show that. Its value is that the result can be checked,
+and that the research is kept, not lost in a chat.
+
+## Measured
+
+Comparisons with the same model without the plugin, using Claude Code's `claude plugin eval`
+(Opus 5.5 and Haiku 5.5, 3 runs per arm). Details, method and how to rerun:
+[evals/README.md](evals/README.md).
+
+| | With research-kit | Without |
+|---|---|---|
+| Accuracy of the final article on a given set of sources with planted traps (price error, single-origin rumor retold 10 times, fake leak, Japanese-only release delay, similarly named games, resumed session): 72 runs | same | same |
+| Live research from scratch (the Shenmue budget): quotes from sources found on the cited page | Opus 16 of 16, Haiku 5 of 5 | Opus 36 of 40 (4 cite live pages closed to bots that were read through an archive), Haiku 29 of 32 (one changed word, one quote from a page the model couldn't open) |
+| Saved originals, translations, rated claims, fact-check log, archive links | yes (protocol followed in 59 of 60 runs) | no |
+| Cost per article, Opus 5.5 | $1–3 | $0.4–1 |
+| Time per article | about 2x | 1x |
+
+## Features (v0.11)
 
 - works by a methodology you pick: `open` (default: everything, rumors labeled), `journalism`
   (attribution, two-source rule, rumors only as news), `academic` (peer-reviewed and primary
@@ -130,14 +170,16 @@ catches a violation: a script, a fresh-subagent review, or nothing ("model only"
 
 ## Roadmap
 
-1. ✅ Plan, source collection, index, session state
-2. ✅ Trust ratings (Admiralty code: source reliability A–F, information credibility 1–6),
-   `claims.md`, fact-check log
-3. ✅ Draft with quotes checked by exact match against originals
-4. ✅ Translations stored next to originals (for reading only; the agent works from originals)
+Done: plan and collection, ratings and fact-check log, drafts with verified quotes,
+translations, methodologies, origins report, generated final copy, eval suite.
 
-Known gaps: `fetch.py` can't read JavaScript-rendered pages and is blocked by some sites
-(Cloudflare, 403); the skill falls back to the agent's own fetch tool or a user paste.
+Next:
+
+- `fetch.py` can't read JavaScript-rendered pages and is blocked by some sites (Cloudflare,
+  403). The skill falls back to the agent's own fetch tool or a user paste; a better path is
+  the most useful improvement left.
+- More live eval topics (a contested topic with paywalled sources, a non-English one).
+- Check the install on Codex and Gemini CLI (so far only Claude Code is tested).
 
 ## Test
 
