@@ -1,5 +1,7 @@
 # research-kit
 
+[![tests](https://github.com/a2881dante/ai-research-kit/actions/workflows/tests.yml/badge.svg)](https://github.com/a2881dante/ai-research-kit/actions/workflows/tests.yml)
+
 An agent skill for evidence-first research for articles and essays. It works in Claude Code,
 Codex and Gemini CLI: the skill is plain Markdown plus stdlib-only Python scripts.
 
@@ -76,25 +78,23 @@ Comparisons with the same model without the plugin, using Claude Code's `claude 
 
 ## Install
 
-Replace `<owner>/<repo>` with wherever this repo is hosted.
-
 **Claude Code** (plugin):
 
 ```sh
-claude plugin marketplace add <owner>/<repo>
+claude plugin marketplace add a2881dante/ai-research-kit
 claude plugin install research-kit@research-kit
 ```
 
 **Gemini CLI**:
 
 ```sh
-gemini skills install https://github.com/<owner>/<repo>.git --path skills/research
+gemini skills install https://github.com/a2881dante/ai-research-kit.git --path skills/research
 ```
 
 **Codex** (also works for Gemini): both read `~/.agents/skills/`.
 
 ```sh
-git clone https://github.com/<owner>/<repo>.git ~/src/research-kit
+git clone https://github.com/a2881dante/ai-research-kit.git ~/src/research-kit
 mkdir -p ~/.agents/skills && ln -s ~/src/research-kit/skills/research ~/.agents/skills/research
 ```
 
