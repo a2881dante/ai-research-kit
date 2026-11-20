@@ -46,6 +46,16 @@ def main():
         assert "  C002 (3): draft.md:3" in r.stdout, r.stdout
         assert "C001 (" not in r.stdout, r.stdout
         assert "1 quotes checked, 1 problems" in r.stdout, r.stdout
+        assert "outside the quote syntax" not in r.stdout, r.stdout  # the translation after a checked quote is fine
+        # quoted text outside the syntax is listed for review, without failing the check
+        write(f"{d}/draft.md", "He called it «альбатросом відеоігор» and “a scorched earth approach” [C001].\n"
+                               "A «word», «рекордов», 「海外での報道には」, a [«Linked title»](https://x.example/a). S001 `Hello world` — «Привет, мир» (перевод).\n")
+        r = check(d, "draft.md")
+        assert r.returncode == 0, r.stdout
+        assert "  draft.md:1: «альбатросом відеоігор»" in r.stdout and "  draft.md:1: “a scorched earth approach”" in r.stdout, r.stdout
+        assert "«word»" not in r.stdout and "«Привет, мир»" not in r.stdout, r.stdout
+        assert "  draft.md:2: «Linked title»" in r.stdout, r.stdout
+        assert "«рекордов»" not in r.stdout and "  draft.md:2: 「海外での報道には」" in r.stdout, r.stdout
         write(f"{d}/cut.md", "S001 `Hello [...] next line` ok, S001 `next line […] Hello` wrong order\n")
         r = check(d, "cut.md")
         assert "NOT FOUND in S001: `next line […] Hello`" in r.stdout and "2 quotes checked, 1 problems" in r.stdout, r.stdout

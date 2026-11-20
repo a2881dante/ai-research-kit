@@ -20,6 +20,9 @@
 - With "Rumors: leads-only" or "exclude" in STATE.md, a draft citing a claim with
   credibility 3-6 is a problem. Otherwise the draft check lists cited claims with credibility 3-6, so you can check they read as
   rumor or doubt, not fact.
+- In draft files, text of two or more words in quotation marks outside the quote syntax is
+  listed: a quote written that way (often a translated phrase) is never checked. Titles, names
+  and terms can stay as they are, so the list is for review and doesn't fail the check.
 Exit 0 if no problems, 1 otherwise.
 """
 import glob
@@ -32,6 +35,11 @@ import unicodedata
 QUOTE = re.compile(r"(?:\b(S\d{3,})\b:?\s*)?`([^`\n]+)`")
 # Differences in how the same text is encoded, not in what it says: they never fail a quote.
 INVISIBLE = dict.fromkeys(map(ord, "­​‌‍⁠﻿"))  # soft hyphen, zero-width
+# A quote in the syntax, with the translation that follows it: S010 `原文` — «перевод».
+CHECKED = re.compile(r"(?:\bS\d{3,}\b:?\s*)?`[^`\n]+`"
+                     r"(?:\s*[—–-]\s*(?:«[^»\n]*»|“[^”\n]*”|\"[^\"\n]*\"|„[^“”\n]*[“”]))?")
+QUOTED = re.compile(r"«([^»\n]+)»|“([^”\n]+)”|„([^“”\n]+)[“”]|\"([^\"\n]+)\"|「([^」\n]+)」")
+CJK = re.compile(r"[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]")
 TYPOGRAPHY = str.maketrans("‘’‚‛“”„‟‐‑‒–—―−",
                            "''''\"\"\"\"-------")
 
@@ -109,6 +117,7 @@ def main():
               f"originals must stay as fetched")
     weak = {}  # claim id -> ["draft.md:12", ...]
     ck = []  # draft lines with [CK] (common knowledge, not collected)
+    loose = []  # quoted text in drafts outside the quote syntax
     state = os.path.join(rd, "STATE.md")
     m = re.search(r"^- Common knowledge:[ \t]*(\w*)", open(state, encoding="utf-8").read() if os.path.exists(state) else "", re.M)
     ck_allowed = bool(m) and m.group(1).lower() == "on"
@@ -165,6 +174,12 @@ def main():
                                     f"the text (Rumors: leads-only/exclude)")
                         else:
                             weak.setdefault(cid, []).append(where)
+                if is_draft and not line.lstrip().startswith("<!--"):
+                    rest = re.sub(r"\]\([^)\s]*\)", "]", CHECKED.sub(" ", line))  # minus link targets
+                    for m in QUOTED.finditer(rest):
+                        text = next(g for g in m.groups() if g).strip()
+                        if len(text.split()) >= 2 or len(text) >= 6 and CJK.search(text):  # CJK has no spaces
+                            loose.append(f"{where}: {m.group(0)}")
                 if is_draft and "[CK]" in line and not line.lstrip().startswith("<!--"):
                     if ck_allowed:
                         ck.append(where)
@@ -178,6 +193,12 @@ def main():
         print("Common-knowledge facts [CK], not checked (each must be widely known, stable, not about "
               "the main topic; otherwise make it a claim):")
         print("  " + ", ".join(ck))
+    if loose:
+        print("Quoted text outside the quote syntax, never checked. A quote from a source (translated "
+              "phrases too) must be S012 `original` — «translation» (translation); titles, names and terms "
+              "can stay:")
+        for item in loose:
+            print("  " + item)
     print(f"{checked} quotes checked, {problems} problems")
     sys.exit(1 if problems else 0)
 

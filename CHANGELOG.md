@@ -4,6 +4,16 @@ Research folders written by an older version keep working, but some need a small
 pass the newer checks. Each **Migration** note says what to change. The easiest way is to ask
 the agent: "upgrade research/<slug> to the current format".
 
+## 0.12.0
+
+- `check_quotes.py` lists draft text in quotation marks written outside the quote syntax (two
+  or more words, or six or more CJK characters). A short translated phrase written that way was
+  never checked; the list is for review and doesn't fail the check, since titles and names stay
+  as they are.
+- Evals: an intake case (does the agent ask before researching?) and a live case on a contested
+  topic with Japanese sources and an article in Ukrainian; `verify_live.py` lists translated
+  quotes for a manual check and retries a failed download once.
+
 ## 0.11.0
 
 - `report.py` warns when `final.md` differs from what `build_final.py` builds (hand edits or

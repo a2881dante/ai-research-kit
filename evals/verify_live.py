@@ -11,8 +11,9 @@ Per arm it reports:
   URLs: opened / broken (404, DNS, ...) / blocked (403, 429, Cloudflare: can't tell)
   Quotes (5+ words in “”, «», "" quotes): found on a cited page / not found on any of the
   cited pages that opened / unverifiable (no cited page opened)
-Translated quotes can't match the page, so they show up as "not found" and are listed for a manual
-check against their originals.
+Translated quotes can't match the page: a Cyrillic quote that isn't on any cited page is counted
+as a translation and listed for a manual check against its original (in a plugin article the
+original is in the footnote, and is checked as a quote of its own).
 """
 import argparse
 import json
@@ -27,6 +28,7 @@ from check_quotes import norm  # noqa: E402
 from fetch import TextExtractor, decode, download  # noqa: E402
 
 URL = re.compile(r"https?://(?:[^\s()<>\"'»”\]]|\([^\s()]*\))+")  # keeps balanced (...) as in Wikipedia URLs
+CYRILLIC = re.compile(r"[а-яёіїєґ]", re.I)
 QUOTE = re.compile(r"“([^”\n]+)”|«([^»\n]+)»|\"([^\"\n]+)\"")
 
 
@@ -34,7 +36,12 @@ def page_text(url, cache):
     """(status, normalized text): status is ok, broken or blocked."""
     if url not in cache:
         try:
-            body, headers, _, _ = download(url)
+            try:
+                body, headers, _, _ = download(url)
+            except (urllib.error.URLError, TimeoutError, ConnectionError) as e:
+                if isinstance(e, urllib.error.HTTPError):
+                    raise
+                body, headers, _, _ = download(url)  # one retry: Wayback and some sites time out now and then
             if headers.get_content_type() in ("text/html", "application/xhtml+xml"):
                 html, _ = decode(body, headers.get_content_charset())
                 p = TextExtractor()
@@ -70,18 +77,21 @@ def check(article, cache):
     opened = [t for s, t in pages.values() if s == "ok"]
     quotes = [next(g for g in m if g) for m in QUOTE.findall(article)]
     quotes = [q for q in quotes if len(q.split()) >= 5 or len(q) >= 20 and not q.isascii()]
-    found, missing, unverifiable = [], [], []
+    found, missing, translated, unverifiable = [], [], [], []
     for q in quotes:
         if not opened:
             unverifiable.append(q)
         elif any(on_page(q, t) for t in opened):
             found.append(q)
+        elif CYRILLIC.search(q):
+            translated.append(q)
         else:
             missing.append(q)
     status = [s for s, _ in pages.values()]
     return {"urls": len(urls), "opened": status.count("ok"), "broken": status.count("broken"),
             "blocked": status.count("blocked"), "broken_urls": [u for u, (s, _) in pages.items() if s == "broken"],
-            "quotes": len(quotes), "found": len(found), "missing": missing, "unverifiable": len(unverifiable)}
+            "quotes": len(quotes), "found": len(found), "missing": missing, "translated": translated,
+            "unverifiable": len(unverifiable)}
 
 
 def main():
@@ -104,12 +114,15 @@ def main():
         ok = [r for r in runs if "error" not in r]
         tot = lambda k: sum(r[k] for r in ok)  # noqa: E731
         missing = sum(len(r["missing"]) for r in ok)
+        translated = sum(len(r["translated"]) for r in ok)
         print(f"{arm}: {len(ok)} articles | URLs {tot('urls')}: opened {tot('opened')}, broken {tot('broken')}, "
               f"blocked {tot('blocked')} | quotes {tot('quotes')}: found {tot('found')}, not on cited pages "
-              f"{missing}, unverifiable {tot('unverifiable')}")
+              f"{missing}, translations to check {translated}, unverifiable {tot('unverifiable')}")
         for r in ok:
             for q in r["missing"]:
                 print(f"    not found: “{q[:120]}”")
+            for q in r["translated"]:
+                print(f"    translation: “{q[:120]}”")
             for u in r["broken_urls"]:
                 print(f"    broken URL: {u}")
     if a.out:

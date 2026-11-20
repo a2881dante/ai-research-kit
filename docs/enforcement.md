@@ -17,6 +17,7 @@ skill at fixed points (after collecting, after assessing, after every draft revi
 |---|---|---|
 | Originals are never edited | script | `fetch.py` stores a sha256 of the text; `check_quotes.py` reports any `original.md` that no longer matches. Sources saved before v0.11 have no hash and aren't checked. |
 | Quotes come only from saved originals, verbatim | script | `check_quotes.py` finds every `` S012 `quote` `` (sources.md, claims.md, draft.md) in its original, ignoring only encoding differences. Cuts must be marked `[...]`. |
+| A source's words in the draft are written as a quote, not in plain quotation marks | review | `check_quotes.py` lists draft text of 2+ words (or 6+ CJK characters) in quotation marks outside the quote syntax; the model turns quotes into the syntax and leaves titles and names. |
 | Quoting a non-verbatim capture | script (warning) | `check_quotes.py` warns on quotes from `capture: model-fetch`. |
 | The disk is the memory (STATE.md kept current) | model only | `report.py` only checks that STATE.md has a Settings block. |
 | Keep weak sources | model only | |
@@ -78,6 +79,11 @@ skill at fixed points (after collecting, after assessing, after every draft revi
 
 ## What "model only" means in practice
 
-These rules depend on the model's discipline, and weaker models break them first. The eval
-suite (planned) measures how often they hold; any rule that breaks often should move to a
-script or a review.
+These rules depend on the model's discipline, and weaker models break them first. The
+[eval suite](../evals/README.md) measures how often they hold: as of 0.11, 40 of 42 plugin runs
+on Opus 5.5 and Haiku 5.5 followed the protocol (the misses, both Haiku: once it didn't invoke
+the skill, once it wrote `final.md` by hand and skipped the last quote check). One rule broke
+more often: Opus sometimes put short translated phrases in quotation marks outside the quote
+syntax, so the quote check never saw them. Since 0.12 `check_quotes.py` lists such text for
+review.
+Any rule that starts breaking often should move to a script or a review.

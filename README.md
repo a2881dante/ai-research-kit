@@ -37,13 +37,15 @@ Comparisons with the same model without the plugin, using Claude Code's `claude 
 
 | | With research-kit | Without |
 |---|---|---|
-| Accuracy of the final article on a given set of sources with planted traps (price error, single-origin rumor retold 10 times, fake leak, Japanese-only release delay, similarly named games, resumed session): 72 runs | same | same |
+| Accuracy of the final article on a given set of sources with planted traps (price error, single-origin rumor retold 10 times, fake leak, Japanese-only release delay, similarly named games, resumed session): 48 runs | same | same |
 | Live research from scratch (the Shenmue budget): quotes from sources found on the cited page | Opus 16 of 16, Haiku 5 of 5 | Opus 36 of 40 (4 cite live pages closed to bots that were read through an archive), Haiku 29 of 32 (one changed word, one quote from a page the model couldn't open) |
-| Saved originals, translations, rated claims, fact-check log, archive links | yes (protocol followed in 59 of 60 runs) | no |
-| Cost per article, Opus 5.5 | $1–3 | $0.4–1 |
-| Time per article | about 2x | 1x |
+| Contested topic, sources in English and Japanese, article in Ukrainian (Silent Hills): translated quotes that come with their checked original | Opus 16 of 22, Haiku 8 of 8 | 0 of 56 |
+| Vague request: checks with you (languages, audience, rumors, depth) before researching | 6 of 6 | 0 of 6 (researches on its own assumptions; Opus spends $1–2 on it) |
+| Saved originals, translations, rated claims, fact-check log, archive links | yes (protocol followed in 40 of 42 plugin runs) | no |
+| Cost per article, Opus 5.5 | $1–5 | $0.4–2 |
+| Time per article | about 2–3x | 1x |
 
-## Features (v0.11)
+## Features (v0.12)
 
 - works by a methodology you pick: `open` (default: everything, rumors labeled), `journalism`
   (attribution, two-source rule, rumors only as news), `academic` (peer-reviewed and primary

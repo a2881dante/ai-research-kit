@@ -378,6 +378,10 @@ python3 ${CLAUDE_SKILL_DIR}/scripts/check_quotes.py research/<slug> draft.md
 
 It verifies the quotes, reports unknown C/S IDs, and lists the cited claims with credibility
 3-6. Re-read every sentence it lists, and fix any that presents a rumor or doubt as fact.
+It also lists text in quotation marks written outside the quote syntax. Go through that list:
+a source's words, including a short translated phrase («the albatross of video games»), become
+S012 `original` — «translation» (translation), so they are checked; titles, names and terms
+stay as they are.
 
 The script can't check meaning, so then do a **fact review**: go through the draft sentence
 by sentence and compare each one with the claims it cites. Look for:

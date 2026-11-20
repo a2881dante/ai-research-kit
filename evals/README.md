@@ -73,7 +73,7 @@ claude plugin eval . --scaffold --trust-plugin --judge-model haiku \
 A full run takes a while and uses a fair amount of tokens: every run is a complete assess and
 write session.
 
-The live case (`shenmue-live`) needs web tools and network for scripts. In the eval sandbox,
+The live cases (`shenmue-live`, `silent-hills-live`) need web tools and network for scripts. In the eval sandbox,
 scripts can only reach domains granted with `WebFetch(domain:...)`; the built-in WebSearch and
 WebFetch tools work everywhere. The list used for the results below:
 
@@ -86,6 +86,9 @@ claude plugin eval . --case shenmue-live --trust-plugin --judge-model haiku --mo
   --allow-tools Write Edit Bash WebSearch WebFetch $D --json live.json
 python3 evals/verify_live.py live.json   # opens every cited URL, looks for every quote
 ```
+
+For `silent-hills-live`, grant the sites named in its prompt instead, and run
+`verify_live.py live.json --case silent-hills-live --grader reason-not-presented-as-official`.
 
 This restriction exists only inside the eval sandbox. In normal use the skill's scripts reach
 any site, with Claude Code asking for permission as usual.
@@ -110,7 +113,7 @@ Score = share of scored graders passed. Cost is Claude Code's list-price estimat
 acquisition, which the skill's rules allow (a confirmed fact). That grader was too strict and
 has been replaced by a judge that accepts the denial.
 
-Protocol indicators (plugin arm, 24 runs per model): on Opus every run fired the skill,
+Protocol indicators (plugin arm, 12 runs per model): on Opus every run fired the skill,
 generated `final.md` with `build_final.py`, ran the report, ended with a clean quote check, and
 (where graded) rated the PS5 rumor 3+ as one origin; in the resume case every run fixed both
 planted rating mistakes and appended to the fact-check log instead of rewriting it. On Haiku
@@ -121,9 +124,8 @@ without the skill, even with 41 long pages, a Japanese-only release delay, a rum
 times, similarly named games and a resumed session. So the skill doesn't improve the accuracy
 of the final text in these conditions. What it adds is the process and the trail: saved
 originals, a rated claim for every fact, origins, a fact-check log, verified quotes and a
-generated final copy, all reliably produced (47 of 48 plugin runs here; 59 of 60 counting the live runs below). It costs about 2-3x more
-and takes about twice as long. Not measured yet: live web search, where the risk of citing
-pages the model never opened, or quotes that aren't on the page, is real.
+generated final copy, all reliably produced (23 of 24 plugin runs). It costs about 2-3x more and
+takes about twice as long. Live web research is measured below.
 
 How the earlier numbers were corrected: the first run reported a +6% advantage for the
 plugin, which came from a too-narrow "no invented facts" reference that penalized footnote
@@ -171,3 +173,68 @@ the archive, or quotes a source it couldn't open), and the weaker model altered 
 the plugin, every source quote was checked against a saved original and opens at a cited URL,
 at about 2.5x the cost (Opus) or 2x (Haiku).
 
+
+### Intake (`silent-hills-intake`)
+
+2026-11-20, 3 runs per arm. A vague request in Ukrainian, with no "don't ask me": "I want to
+write an essay about why Silent Hills was cancelled, help me with the research, work in
+research/silent-hills". Plugin evals are single-turn, so this case checks only the first turn:
+does the model check with the user before researching?
+
+| | Opus 5.5 with | Opus 5.5 without | Haiku 5.5 with | Haiku 5.5 without |
+|---|---|---|---|---|
+| Asks or shows a plan/settings before researching | 3 of 3 | 0 of 3 | 3 of 3 | 0 of 3 |
+| Replies in Ukrainian | 3 of 3 | 3 of 3 | 3 of 3 | 3 of 3 |
+| Settings saved in `STATE.md`, no sources saved before approval | 3 of 3 | | 3 of 3 | |
+| Cost per run | $0.27 | $1.51 | $0.01 | $0.07 |
+| Time per run | 0.8 min | 3.2 min | 0.8 min | 1.3 min |
+
+With the plugin, the reply is one round of questions: languages the user reads (pointing out
+that many first-hand sources are Japanese), audience and length, how to treat rumors, depth,
+time frame. Without it, the model does a full research pass on its own assumptions and
+proposes the essay's argument.
+
+### Live, contested, non-English (`silent-hills-live`)
+
+2026-11-20, 3 runs per arm. Task, in Ukrainian: research how and when Silent Hills was
+cancelled, what Konami, Kojima and del Toro said, where the explanations come from and what
+rumors followed, then write a ~800-word article in Ukrainian with sources. The sources are in
+English and Japanese; the real reasons were never stated officially; the later rumors were
+denied. Scored: the article exists, is in Ukrainian and cites web sources; the timeline is
+right; the reasons are attributed, not presented as Konami's; the 2020 Sony and Abandoned
+rumors are labeled with their denials; at least one Japanese source is cited.
+
+| | Opus 5.5 with | Opus 5.5 without | Haiku 5.5 with | Haiku 5.5 without |
+|---|---|---|---|---|
+| Score | 1.00 | 1.00 | 0.90 * | 0.86 |
+| Cites a Japanese source | 3 of 3 | 3 of 3 | 2 of 3 | 0 of 3 |
+| Cited URLs per article | 35 | 18 | 6 | 10 |
+| Cited URLs that open (rest: closed to bots) | 84 of 106 ** | 43 of 54 | 18 of 18 | 23 of 31 |
+| Quotes in the source's language, found on a cited page | 21 of 21 | 16 of 16 | 8 of 8 | 4 of 5 *** |
+| Translated quotes (into Ukrainian) | 22 | 42 | 8 | 14 |
+| ... with the original shown and checked | 16 | 0 | 8 | 0 |
+| Protocol followed (skill, generated `final.md`, clean quote check) | 3 of 3 | | 2 of 3 | |
+| Cost per run | $4.67 | $1.66 | $0.19 | $0.12 |
+| Time per run | 14.7 min | 4.9 min | 4.7 min | 2.6 min |
+
+Article titles in quotation marks are left out of the quote counts.
+
+\* One run wrote `final.md` by hand, skipped the final quote check, and mentioned the 2020
+insider rumors and the Abandoned theory without their denials (the third run failed only on
+citing no Japanese source, like all three runs without the plugin).
+
+\*\* 22 live URLs of sites closed to bots; their archive copies, cited next to them, open.
+Two quotes first looked missing because the Wayback Machine refused requests during the check;
+both are on the pages on a re-check.
+
+\*\*\* Del Toro's "one of the most moronic things I've ever witnessed" is real (a tweet,
+2016-12-02) but isn't on any page the article cites.
+
+**What this shows.** On a contested topic with sources in other languages, Opus writes an
+accurate, well-attributed article either way. Haiku finds Japanese sources more often with
+the plugin. The clear difference is again verifiability: without the plugin, none of the 56
+quotes translated into Ukrainian comes with its original, so a reader has to find each source
+and translate it back to check it; with the plugin, 24 of 30 do, checked against a saved copy.
+The other 6 (Opus) are short translated phrases in quotation marks, written outside the quote
+syntax, which the quote check doesn't see (since 0.12 it lists them for review). The faithfulness of translations without an
+original wasn't checked. Cost: about 2.8x (Opus) and 1.6x (Haiku).
