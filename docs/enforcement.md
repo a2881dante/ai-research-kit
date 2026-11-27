@@ -38,7 +38,7 @@ skill at fixed points (after collecting, after assessing, after every draft revi
 |---|---|---|
 | Sources saved verbatim with ID and index entry | script (by construction) | `fetch.py` writes original.md, raw file and the sources.md entry; other captures are labeled (`capture:`). |
 | Parallel collectors write only their own `collect/<name>.md` | model only | Their quotes are checked by `check_quotes.py` on that file, and again after the merge into `sources.md` and `claims.md`. |
-| No duplicate sources | script | `fetch.py` compares normalized URLs (scheme, www/m./old./amp., tracking parameters, slash, fragment, encoding) and redirect targets. |
+| No duplicate sources | script | `fetch.py` compares normalized URLs (scheme, www/m./old./amp., tracking parameters, slash, fragment, encoding, a wiki's `api.php` address for a page) and redirect targets, and re-checks under a lock just before saving, so two agents saving one page at once get one copy. |
 | Published starts with a date | script (warning) | `report.py`. |
 | Key phrases are exact | script | `check_quotes.py`. |
 | PDFs aren't saved without text | script | `fetch.py` refuses (exit 5) when no PDF tool is installed. |

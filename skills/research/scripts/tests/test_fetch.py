@@ -1,11 +1,13 @@
 """Self-check for fetch.py against a local server: python3 tests/test_fetch.py"""
 import importlib.util
+import json
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
 import threading
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # the scripts live one level up
@@ -37,9 +39,26 @@ def make_pdf(text):
 PDF = make_pdf("Verbatim PDF sentence for the test.")
 
 
+WIKI_BODY = "<p>" + "Wiki body sentence. " * 30 + "</p>"
+
+
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
-        if self.path.startswith("/doc.pdf"):
+        honest = self.headers.get("User-Agent", "").startswith("research-kit")
+        if self.path.startswith("/wiki/") or self.path.startswith("/ua-only") and not honest:
+            self.send_response(403)  # a wiki that blocks pages; a site that wants an honest agent
+            self.end_headers()
+            return
+        if self.path.startswith("/api.php"):
+            if "prop=wikitext" in self.path:
+                data = {"parse": {"title": "Raw Page", "wikitext": {"*": "'''Raw''' — wikitext " + "x" * 400}}}
+            else:
+                data = {"parse": {"title": "Blocked Page", "text": WIKI_BODY}}
+            body, ctype = json.dumps(data).encode(), "application/json"
+        elif self.path.startswith("/slow"):
+            time.sleep(1)
+            body, ctype = PAGE, "text/html"
+        elif self.path.startswith("/doc.pdf"):
             body, ctype = PDF, "application/pdf"
         elif self.path.startswith("/go-to-a"):  # redirect to an already saved page
             self.send_response(302)
@@ -124,6 +143,31 @@ def main():
         index = read(d, "sources.md")
         assert index.startswith("# Sources") and index.count("\n## S") == (5 if os.path.exists(os.path.join(d, "sources", "S005")) else 4)
         assert "## S004 — Pasted\n- URL: https://example.com/x\n" in index
+
+    with tempfile.TemporaryDirectory() as d:
+        # a blocked wiki page is read through the API and kept under its own URL
+        r = run(d, base + "/wiki/Blocked_Page")
+        assert r.returncode == 0, r.stderr
+        orig = read(d, "sources", "S001", "original.md")
+        assert f'url: "{base}/wiki/Blocked_Page"' in orig and "fetched_from" in orig and "api.php" in orig, orig[:400]
+        assert "Wiki body sentence." in orig and "<p>" not in orig and 'title: "Blocked Page"' in orig, orig[:400]
+        # an API address is saved as the page; the same page under another API address is a duplicate
+        r = run(d, base + "/api.php?action=parse&page=Raw_Page&format=json&prop=wikitext")
+        assert r.returncode == 0, r.stderr
+        orig = read(d, "sources", "S002", "original.md")
+        assert f'url: "{base}/wiki/Raw_Page"' in orig and "'''Raw''' — wikitext" in orig, orig[:400]
+        for same in ("/api.php?action=parse&format=json&prop=wikitext&page=Raw_Page&redirects=1",
+                     "/api.php?action=parse&page=Raw%20Page&prop=text&format=json", "/wiki/Raw_Page"):
+            r = run(d, base + same)
+            assert r.returncode == 3 and "S002" in r.stdout, (same, r.returncode, r.stdout)
+        assert f"- URL: {base}/wiki/Raw_Page\n" in read(d, "sources.md")
+        assert run(d, base + "/ua-only").returncode == 0  # retried with an honest agent
+        # the same page saved by two agents at once: one copy
+        procs = [subprocess.Popen([sys.executable, FETCH, d, base + "/slow", "--no-archive"],
+                                  stdout=subprocess.PIPE, text=True) for _ in range(2)]
+        codes = sorted(p.wait() for p in procs)
+        assert codes == [0, 3] and read(d, "sources.md").count("/slow") == 1, codes
+        assert not os.path.exists(os.path.join(d, ".fetch.lock"))
     srv.shutdown()
     print("ok")
 

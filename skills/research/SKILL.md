@@ -160,9 +160,15 @@ For each subquestion:
    This saves the text verbatim plus the raw page, looks up an existing Wayback snapshot,
    assigns the next ID and appends an entry to `sources.md`. Exit code 3 means the page is
    already saved (it prints the ID); variants of the same URL (http/https, `www.`, mobile
-   `m.`, tracking parameters, trailing slash, a redirect) count as the same page. Add
+   `m.`, tracking parameters, trailing slash, a redirect) count as the same page. Two agents
+   saving the same page at once get one copy. Add
    `--archive` only when Settings say `Wayback snapshots: on` (it publishes the URL). Use
    `--no-archive` for pages that shouldn't be sent to archive.org at all.
+
+   Wikis (Wikipedia, Fandom and other MediaWiki sites): pass the page's own URL
+   (`https://kiseki.fandom.com/wiki/Panzer_Soldat`). If the site refuses the download,
+   `fetch.py` reads the page through the wiki's API and still saves it under that URL, so the
+   footnotes link to the page. An `api.php` address counts as the page it names.
 
    PDFs are saved as `original.pdf` with their text in `original.md`, split by `[page N]`
    markers: use them for page numbers. Exit code 5 means no PDF text tool is installed: ask
@@ -171,8 +177,9 @@ For each subquestion:
 4. Complete that source's entry in `sources.md`:
    - **Author**, **Published**: as shown on the page; "unknown" if not shown. Write the date
      as `YYYY-MM-DD` first, then any comment ("2026-06-07 (snapshot 2026-07-20)"): the report
-     computes dates from it. The publication date matters: later events can make a source
-     outdated.
+     computes dates from it, and only from a date at the start. The date you opened the page
+     is not a publication date: for a wiki's current revision write "unknown (accessed
+     2026-11-26)". The publication date matters: later events can make a source outdated.
    - **Type**: official, press, wiki, blog, forum, imageboard, social, paper, court record...
    - **Rating**, **Origin**: leave empty until step 4.
    - **Subquestions**: the Q ids it helps with
@@ -328,7 +335,9 @@ same origin as S005/S007 (log 2026-11-19)`
 
 Every rating and every rating change gets an entry in `factcheck-log.md` (append-only, never
 rewrite old entries): date and IDs, what was checked, how, what was found, and the result
-(`S007 -> C; C012 -> 3`). A rating without a log entry is unfinished work.
+(`S007 -> C; C012 -> 3`). A rating without a log entry is unfinished work. The report counts
+an ID as logged when the entry names it, or a range that includes it (`S010–S020`,
+`C001-C005`), so write IDs out: "all wiki sources" covers nothing.
 
 Finish with the quote check (it checks `claims.md` too), then the report:
 

@@ -11,6 +11,18 @@ the agent: "upgrade research/<slug> to the current format".
   `sources.md` and `claims.md` by the main agent. Parallel agents no longer edit the shared
   files. Evidence and fact review findings are saved in `reviews/`. (The pattern came from a
   long run where the agent set it up by itself.)
+- `fetch.py` and wikis: a MediaWiki page that refuses the download (Fandom answers 403) is read
+  through the wiki's API, and an `api.php?action=parse` address is saved under the page's own
+  `/wiki/` URL with its text unwrapped from the JSON. Footnotes link to the page. Variants of
+  one API address (`&redirects=1`, `prop=`) count as the same page.
+- `fetch.py` retries a 403/429 with an honest User-Agent (Wikipedia now refuses browser-like
+  agents from scripts), and saves under a lock: two agents saving the same page at once get one
+  copy instead of two.
+- `report.py` takes a source's date only from the start of Published. "unknown (accessed
+  2026-11-26)" used to count as a 2026-11-26 publication and raised false "contradicting
+  evidence is newer" warnings. **Migration**: a Published field that has its date after some
+  text ("last edited 2026-11-17") gets no date until the date moves to the front.
+- SKILL.md says how the report decides that a rating is logged (its ID or a range is named).
 - `install.sh`: one-command install and update for Claude Code, Codex and Gemini CLI.
 - `usage.py research/<slug>`: tokens per model (subagents included) and the cost at API list
   prices, from Claude Code's session logs. The skill records each session's id on a new

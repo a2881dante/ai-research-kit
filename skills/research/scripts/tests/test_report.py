@@ -99,7 +99,7 @@ def main():
         assert "C002: As of 2026-11-19 is newer than any supporting evidence (2026-06-08)" in out, out
         assert "S006: Origin should be one short label" in out, out
         assert "C006: contradicting evidence is newer than any support (S006 2026-11-16)" in out, out
-        assert "C003  1  as of 2026-11-17" in out, out
+        assert "C003  1  as of ?" in out, out  # "last edited 2026-11-17" doesn't start with the date
         assert "STATE.md has no Settings block" in out, out
         assert "S001: Published should start with the date" in out and "S002: Published" not in out, out
         assert "rated but never mentioned in factcheck-log.md: S004, S006, C005, C006" in out, out

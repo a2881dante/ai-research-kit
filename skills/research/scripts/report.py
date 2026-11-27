@@ -23,8 +23,10 @@ LABEL = re.compile(r"own|[a-z0-9][a-z0-9.-]*")
 
 
 def first_date(text):
-    m = re.search(r"\d{4}-\d{2}-\d{2}", text)
-    return m.group(0) if m else ""
+    """The date a Published field starts with. "unknown (accessed 2026-11-26)" has none: an access
+    or snapshot date in the comment says nothing about when the source was written."""
+    m = re.match(r"\s*(\d{4}-\d{2}-\d{2})", text)
+    return m.group(1) if m else ""
 
 
 def read(path):
