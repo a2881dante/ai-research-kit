@@ -4,6 +4,7 @@
 - Text type / audience:
 - Phase: intake <!-- intake | plan proposed | plan approved | collecting Qn | assessed | drafting | ... -->
 - Updated:
+- Sessions: <!-- agent session ids, for usage.py -->
 
 ## Settings
 

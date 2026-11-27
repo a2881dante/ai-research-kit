@@ -47,7 +47,7 @@ Comparisons with the same model without the plugin, using Claude Code's `claude 
 | Cost per article, Opus 5.5 | $1–5 | $0.4–2 |
 | Time per article | about 2–3x | 1x |
 
-## Features (v0.12)
+## Features (v0.13)
 
 - works by a methodology you pick: `open` (default: everything, rumors labeled), `journalism`
   (attribution, two-source rule, rumors only as news), `academic` (peer-reviewed and primary
@@ -75,8 +75,21 @@ Comparisons with the same model without the plugin, using Claude Code's `claude 
 - `report.py` counts independent origins per claim (ten reposts of one leak = one origin),
   shows draft coverage and warns about weak spots; `summary.json` is machine-readable
 - keeps the session state in `STATE.md`, so a new session picks up where the last one stopped
+- `usage.py` shows the tokens a research took (subagents included) and their cost at API list
+  prices; Claude Code only, from its session logs
 
 ## Install
+
+One command on macOS and Linux. It installs the plugin for Claude Code and links the skill for
+Codex and Gemini CLI, whichever are on your PATH. Run it again to update; `--uninstall` removes
+it (your `research/` folders stay):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/a2881dante/ai-research-kit/main/install.sh | bash
+```
+
+To read it first: download [install.sh](install.sh), look it over, then run `bash install.sh`.
+Or install by hand:
 
 **Claude Code** (plugin):
 
@@ -151,6 +164,8 @@ research/<slug>/
     original.md         YAML front matter + verbatim text. Never edited.
     raw.html            the page as downloaded (or original.pdf etc.)
     translation.ru.md   bilingual reading copy: "> original paragraph" + translation
+  collect/              with subagents: BRIEF.md + one report per collector
+  reviews/              evidence and fact review findings, one file per round
 ```
 
 `capture` records how the text was obtained: `script` (verbatim download), `user-paste`, or
@@ -188,10 +203,12 @@ Next:
 CI runs these with Python 3.13 on Linux and macOS, and with 3.9 on macOS (`.github/workflows/tests.yml`).
 
 ```sh
+bash tests/test_install.sh
 python3 skills/research/scripts/tests/test_fetch.py
 python3 skills/research/scripts/tests/test_check_quotes.py
 python3 skills/research/scripts/tests/test_build_final.py
 python3 skills/research/scripts/tests/test_report.py
+python3 skills/research/scripts/tests/test_usage.py
 ```
 
 ## License

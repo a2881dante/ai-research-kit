@@ -32,3 +32,6 @@ jobs:
           python test_check_quotes.py
           python test_build_final.py
           python test_report.py
+          python test_usage.py
+      - name: Check the installer
+        run: bash tests/test_install.sh

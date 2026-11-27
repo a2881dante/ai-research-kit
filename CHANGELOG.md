@@ -4,6 +4,19 @@ Research folders written by an older version keep working, but some need a small
 pass the newer checks. Each **Migration** note says what to change. The easiest way is to ask
 the agent: "upgrade research/<slug> to the current format".
 
+## 0.13.0
+
+- With subagents, collection goes through `collect/`: one `BRIEF.md` for every collector and
+  one report per collector (source fields and candidate claims, quote-checked), merged into
+  `sources.md` and `claims.md` by the main agent. Parallel agents no longer edit the shared
+  files. Evidence and fact review findings are saved in `reviews/`. (The pattern came from a
+  long run where the agent set it up by itself.)
+- `install.sh`: one-command install and update for Claude Code, Codex and Gemini CLI.
+- `usage.py research/<slug>`: tokens per model (subagents included) and the cost at API list
+  prices, from Claude Code's session logs. The skill records each session's id on a new
+  `Sessions:` line in STATE.md; without it, sessions that ran the skill scripts on the folder
+  are counted. **Migration**: none needed; older folders get the line in their next session.
+
 ## 0.12.0
 
 - `check_quotes.py` lists draft text in quotation marks written outside the quote syntax (two
